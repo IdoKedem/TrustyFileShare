@@ -3,6 +3,7 @@ from threading import Thread
 from enums import SocketEnum
 from typing import Dict, List, Optional
 import time
+from collections import defaultdict
 
 clients: Dict[socket.socket, str] = {}
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,9 +19,9 @@ def accept_client():
         print('accepted client!')
         clients[client] = ip
 
-def receive_msg(client, messages: List[Optional[str]]):
+def receive_msg(client, messages):
     msg = client.recv(1024).decode()
-    messages.append(msg)
+    messages[client] = msg
 
 
 
@@ -29,7 +30,7 @@ if __name__ == '__main__':
     print('server up')
     Thread(target=accept_client).start()
     while True:
-        messages = []
+        messages = {}
         threads = []
         for client in clients:
             threads.append(Thread(target=receive_msg, args=(client, messages)))
@@ -38,5 +39,7 @@ if __name__ == '__main__':
             thr.join()
         if messages:
             for client in clients:
-                for msg in messages:
+                for sender, msg in messages.items():
+                    if client is sender:
+                        continue
                     client.send(msg.encode())
