@@ -7,7 +7,7 @@ from typing import Dict
 def accept_client():
     while True:
         client, ip = server_socket.accept()
-        print('Accepted client:', ip)dfh
+        print('Accepted client:', ip)
         clients[client] = ip
         Thread(target=receive_msg, args=(client,)).start()
 
