@@ -16,7 +16,9 @@ def send_message():
     while True:
         client_socket.send(input('enter msg \n').encode())
 
+
+Thread(target=print_messages).start()
+
 Thread(target=send_message).start()
 
-print_messages()
 
