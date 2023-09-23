@@ -1,10 +1,7 @@
 import socket
 from common import SocketEnum, hash_text
-from threading import Thread
 import tkinter as tk
-from typing import Dict, List
-from hashlib import md5
-import queue
+from typing import List
 
 def connect_to_server() -> socket.socket:
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -56,13 +53,14 @@ class LoginWindow(BaseWindow):
             _prepare_frame(frame=password_frame,
                            entry_name='Password', entry_show='*')
 
-            tk.Button(info_frame, text='Submit', height=1,
-                      font=default_font, command=self.check_login).pack()
+            tk.Button(info_frame, text='Submit', command=self.check_login,
+                      height=1, font=default_font, cursor='hand2').pack()
+
 
         def _prepare_frame(frame, entry_name, entry_show=None):
             """
             prepares a frame. used with username and password frames
-            :param frame: frame to fill with widgets
+            :param frame: a frame to fill with widgets
             :param entry_name: name of the entry, shown in label
             :param entry_show: entry's 'show' param
             :return:
@@ -71,7 +69,7 @@ class LoginWindow(BaseWindow):
             tk.Label(frame, text=entry_name + ':',
                      font=default_font).pack(side=tk.LEFT)
             entry = tk.Entry(frame, border=2, show=entry_show,
-                    font=default_font)
+                    font=default_font, cursor='xterm')
             self.entries.append(entry)
             entry.pack()
 
@@ -82,6 +80,7 @@ class LoginWindow(BaseWindow):
         validates the inputted credentials with the server
         :return:
         """
+        # TODO: PREVENT SQL INJECTION
         global client_socket
         credentials_string = ''
 
@@ -96,20 +95,8 @@ class LoginWindow(BaseWindow):
         client_socket.send(SocketEnum.SENDING_LOGIN_INFO.encode())
         client_socket.send(credentials_string.encode())
 
-        response_queue = queue.Queue()
-        get_server_response(response_queue)
-        print(response_queue.get())
-
-
-def get_server_response(response_queue) -> None:
-    """
-    receives a response from the server and puts it in a queue
-    :param response_queue: the queue the response is put in
-    :return: Nothing, mutates 'response_queue'
-    """
-    response = client_socket.recv(1024).decode()
-    response_queue.put(response)
-
+        response = client_socket.recv(1024).decode()
+        print(response)
 
 if __name__ == '__main__':
     client_socket = connect_to_server()

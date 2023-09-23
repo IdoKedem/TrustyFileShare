@@ -13,8 +13,10 @@ def accept_client():
 
 def check_login(client):
     from handle_db import is_login_valid
+
     login_info = client.recv(1024).decode()
     _, username, password = login_info.split(',')
+
     if is_login_valid(username, password):
         client.send(SocketEnum.VALID_LOGIN_INFO.encode())
     else:
