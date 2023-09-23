@@ -10,6 +10,7 @@ def connect_to_server() -> socket.socket:
     return client_socket
 
 
+
 class BaseWindow(tk.Tk):
     def __init__(self, title: str,
                  width: int=800, height: int=800):
