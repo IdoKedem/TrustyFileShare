@@ -3,9 +3,10 @@ from common import hash_text
 from typing import Tuple, Optional
 
 class User:
-    def __init__(self, username, password):
+    def __init__(self, username, password, is_admin=False):
         self.username = username
         self.password = hash_text(password)
+        self.is_admin = is_admin
 
     def get_login_info(self):
         return self.username, self.password
@@ -46,20 +47,18 @@ def initialize_db():
     :return:
     """
     run(command="""CREATE TABLE IF NOT EXISTS users(
-        ID INTEGER PRIMARY KEY, username TEXT, password TEXT)""")
+        ID INTEGER PRIMARY KEY, username TEXT, password TEXT, isadmin BOOLEAN)""")
     users = \
-        [User('Ido', '123'), User('Kedem', '456')]
+        [User('Ido', '123', is_admin=True), User('Kedem', '456')]
 
     for user in users:
         if not pull_user_value(*user.get_login_info(),
                                db_instance=db_instance):  # user doesnt exist
-            run(command=f"""INSERT INTO users (username, password) 
-                VALUES('{user.username}','{user.password}')""")
-
+            run(command=f"""INSERT INTO users (username, password, isadmin) 
+                VALUES('{user.username}','{user.password}', '{user.is_admin}')""")
 
 def is_login_valid(username, password) -> bool:
     return bool(pull_user_value(username=username, password=password))
-
 
 if __name__ == '__main__':
     db_instance = DataBase('TFS.db')

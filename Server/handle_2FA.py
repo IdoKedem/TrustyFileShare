@@ -20,16 +20,15 @@ def generate_qr_img(totp):
 def create_new_otp():
     generate_new_key()
     generate_qr_img(get_totp())
-def verify_totp_token(user_input_token=None):
+def is_token_valid(user_input_token):
     totp = get_totp()
-    print(totp.now())
-    user_input_token = input()
     return totp.verify(user_input_token)
 
 def get_totp():
-    if not os.path.exists('2FA/key.txt'):
+
+    if not os.path.isfile('Server/2FA/key.txt'):
         print('No key found')
         return
-    with open('2FA/key.txt', 'r') as f:
+    with open('Server/2FA/key.txt', 'r') as f:
         key = key_decryption(f.read())
     return pyotp.TOTP(key)
