@@ -10,7 +10,6 @@ def connect_to_server() -> socket.socket:
     return client_socket
 
 
-
 class BaseWindow(tk.Tk):
     def __init__(self, title: str,
                  width: int=800, height: int=800):
@@ -21,9 +20,8 @@ class BaseWindow(tk.Tk):
 
 
 class LoginWindow(BaseWindow):
-    def __init__(self, title: str,
-                 width: int=800, height: int=600):
-        super().__init__(title, width, height)
+    def __init__(self, title: str):
+        super().__init__(title)
         self.entries: List[tk.Entry] = []
         self.prepare_window()
 
@@ -81,7 +79,6 @@ class LoginWindow(BaseWindow):
         validates the inputted credentials with the server
         :return:
         """
-        # TODO: PREVENT SQL INJECTION
         global client_socket
         credentials_string = ''
 
