@@ -41,7 +41,7 @@ def pull_user_value(username, password,
 def initialize_db():
     """
     this function initialize the database at the start of the script
-    with the permitted users
+    with a table of users, and a table of 2FA related files
     only adds users that dont already exist
     :return:
     """
