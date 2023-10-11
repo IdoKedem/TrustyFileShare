@@ -1,24 +1,16 @@
 import sqlite3
-from common import hash_text
+from common import User
 from typing import Tuple, Optional
+import os
 
-class User:
-    def __init__(self, username, password, is_admin=False):
-        self.username = username
-        self.password = hash_text(password)
-        self.is_admin = is_admin
-
-    def get_login_info(self):
-        return self.username, self.password
-    def __str__(self):
-        return \
-            f'Username: {self.username}\nPassword: {self.password}'
 
 class DataBase:
     def __init__(self, db_path):
         self.connection = sqlite3.connect(db_path)
         self.cursor = self.connection.cursor()
-def run(command):
+def run(command, db_instance=None):
+    if not db_instance:
+        db_instance = DataBase('Server/TFS.db')
     db_instance.cursor.execute(command)
     db_instance.connection.commit()
 
@@ -42,7 +34,7 @@ def pull_user_value(username, password,
 def initialize_db():
     """
     this function initialize the database at the start of the script
-    with a table of users, and a table of 2FA related files
+    with a table of users, and a table of uploaded files
     only adds users that dont already exist
     :return:
     """
@@ -57,8 +49,17 @@ def initialize_db():
             run(command=f"""INSERT INTO users (username, password, isadmin) 
                 VALUES('{user.username}','{user.password}', '{user.is_admin}')""")
 
-def is_login_valid(username, password) -> bool:
-    return bool(pull_user_value(username=username, password=password))
+    run(command="""CREATE TABLE IF NOT EXISTS files(
+                ID INTEGER PRIMARY KEY, filename TEXT, 
+                uploaded_by TEXT, content TEXT)""")
+
+
+def add_file_to_db(file_path: str, uploading_user):
+    file_name = os.path.basename(file_path)
+    with open(file_path, 'r') as f:
+        file_content = f.read()
+    run(command=f"""INSERT INTO files(filename, uploaded_by, content)
+                VALUES('{file_name}', '{uploading_user}', '{file_content}')""")
 
 if __name__ == '__main__':
     db_instance = DataBase('TFS.db')

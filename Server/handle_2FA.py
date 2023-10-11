@@ -9,23 +9,24 @@ def generate_new_key():
         f.write(secret_key)
 
 def generate_qr_img(totp):
-
     totp_uri = totp.provisioning_uri(
         name='user@example.com',
         issuer_name='TFS')
-    if not os.path.exists('2FA/QR.png'):
+    if not os.path.exists('Server/2FA/QR.png'):
         img = qrcode.make(totp_uri)
-        img.save('2FA/QR.png')
+        img.save('Server/2FA/QR.png')
 
 def create_new_otp():
     generate_new_key()
     generate_qr_img(get_totp())
 def is_token_valid(user_input_token):
+    #TODO: remove testing token
+
     totp = get_totp()
-    return totp.verify(user_input_token)
+    return totp.verify(user_input_token) \
+           or user_input_token == '69'
 
 def get_totp():
-
     if not os.path.isfile('Server/2FA/key.txt'):
         print('No key found')
         return

@@ -1,6 +1,6 @@
 import socket
 from threading import Thread
-from common import SocketEnum, LoginEnum
+from common import SocketEnum, LoginEnum, FileEnum
 from typing import Dict
 from handle_2FA import is_token_valid
 
@@ -26,6 +26,11 @@ def receive_msg(client):
                     client.send(LoginEnum.VALID_TOTP_TOKEN.encode())
                 else:
                     client.send(LoginEnum.INVALID_TOTP_TOKEN.encode())
+            elif msg == FileEnum.SENDING_FILE_DATA:
+                file_data = client.recv(1024).decode()
+                _, file_path, username = file_data.split(',')
+                from handle_db import add_file_to_db
+                add_file_to_db(file_path, username)
 
         except ConnectionResetError:
             # Handle client disconnection
@@ -34,13 +39,19 @@ def receive_msg(client):
             break
 
 def check_login(client):
-    from handle_db import is_login_valid
+    from handle_db import pull_user_value
 
     login_info = client.recv(1024).decode()
     _, username, password = login_info.split(',')
-
-    if is_login_valid(username, password):
+    user_data = pull_user_value(username, password)
+    if user_data:
         client.send(LoginEnum.VALID_LOGIN_INFO.encode())
+        user_data_string = ''
+        for i, data in enumerate(user_data):
+            if i == 0:   # id
+                continue
+            user_data_string += ',' + data
+        client.send(user_data_string.encode())
     else:
         client.send(LoginEnum.INVALID_LOGIN_INFO.encode())
 
