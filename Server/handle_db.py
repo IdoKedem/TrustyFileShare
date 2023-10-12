@@ -31,7 +31,7 @@ def pull_user_value(username, password,
     return db_instance.cursor.fetchone()
 
 
-def initialize_db():
+def initialize_db(db_instance=None):
     """
     this function initialize the database at the start of the script
     with a table of users, and a table of uploaded files
@@ -39,19 +39,20 @@ def initialize_db():
     :return:
     """
     run(command="""CREATE TABLE IF NOT EXISTS users(
-        ID INTEGER PRIMARY KEY, username TEXT, password TEXT, isadmin BOOLEAN)""")
+        ID INTEGER PRIMARY KEY, username TEXT, password TEXT, isadmin BOOLEAN,
+        UNIQUE(ID, username))""", db_instance=db_instance)
     users = \
         [User('Ido', '123', is_admin=True), User('Kedem', '456')]
 
     for user in users:
-        if not pull_user_value(*user.get_login_info(),
-                               db_instance=db_instance):  # user doesnt exist
-            run(command=f"""INSERT INTO users (username, password, isadmin) 
-                VALUES('{user.username}','{user.password}', '{user.is_admin}')""")
+        run(command=f"""INSERT OR IGNORE INTO users (username, password, isadmin) 
+            VALUES('{user.username}', '{user.password}', '{user.is_admin}')""",
+            db_instance=db_instance)
 
     run(command="""CREATE TABLE IF NOT EXISTS files(
                 ID INTEGER PRIMARY KEY, filename TEXT, 
-                uploaded_by TEXT, content TEXT)""")
+                uploaded_by TEXT, content TEXT)""",
+        db_instance=db_instance)
 
 
 def add_file_to_db(file_path: str, uploading_user):
@@ -63,7 +64,7 @@ def add_file_to_db(file_path: str, uploading_user):
 
 if __name__ == '__main__':
     db_instance = DataBase('TFS.db')
-    initialize_db()
+    initialize_db(db_instance=db_instance)
 
 
 
