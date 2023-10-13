@@ -3,14 +3,29 @@ from common import User
 from typing import Tuple, Optional
 import os
 
+db_name = 'TFS.db'
 
 class DataBase:
-    def __init__(self, db_path):
-        self.connection = sqlite3.connect(db_path)
+    def __init__(self, db_name: str):
+        self.db_path = DataBase.get_db_path(db_name)
+        self.connection = sqlite3.connect(self.db_path)
         self.cursor = self.connection.cursor()
+
+    @staticmethod
+    def get_db_path(db_name: str) -> str:
+        cur_directory = os.getcwd()
+        db_path = os.path.join(cur_directory, db_name)
+        if os.path.exists(db_path):
+            return db_path
+        child_directory = cur_directory + r'\Server'
+        db_path = os.path.join(child_directory, db_name)
+        if os.path.exists(db_path):
+            return db_path
+        raise ValueError("Database Not Found")
+
 def run(command, db_instance=None):
     if not db_instance:
-        db_instance = DataBase('Server/TFS.db')
+        db_instance = DataBase(db_name)
     db_instance.cursor.execute(command)
     db_instance.connection.commit()
 
@@ -24,7 +39,7 @@ def pull_user_value(username, password,
     :return: the entry itself if exists, none otherwise
     """
     if not db_instance:
-        db_instance = DataBase('Server/TFS.db')
+        db_instance = DataBase(db_name)
     db_instance.cursor.execute(
         "SELECT * FROM users WHERE username = ? AND password = ?",
         (username, password))
@@ -63,7 +78,7 @@ def add_file_to_db(file_path: str, uploading_user):
                 VALUES('{file_name}', '{uploading_user}', '{file_content}')""")
 
 if __name__ == '__main__':
-    db_instance = DataBase('TFS.db')
+    db_instance = DataBase(db_name)
     initialize_db(db_instance=db_instance)
 
 
