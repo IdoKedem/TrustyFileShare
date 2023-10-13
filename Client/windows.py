@@ -130,6 +130,8 @@ class LoginTopLevel(tk.Toplevel):
     def verify_totp_token(self):
         token = self.token_entry.get()
         self.token_entry.delete(0, tk.END)
+        if not token:
+            return
         self.client_socket.send(LoginEnum.SENDING_TOTP_TOKEN.encode())
         self.client_socket.send(token.encode())
 
@@ -156,7 +158,9 @@ class MainWindow(BaseWindow):
                   font=self.default_font).pack()
 
     def upload_file_to_db(self):
-        file_path = filedialog.askopenfilename()
+        file_path = filedialog.askopenfilename(
+            title='Select a file to upload',
+            filetypes=FileEnum.SUPPORTED_FILE_TYPES)
         print(file_path)
         print(self.user.username)
         file_details_string = \

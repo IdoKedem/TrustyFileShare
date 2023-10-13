@@ -16,6 +16,9 @@ class LoginEnum:
 
 class FileEnum:
     SENDING_FILE_DATA = 'Sending File Data!'
+    SUPPORTED_FILE_TYPES = [
+        ('Text Files', '*.txt')
+    ]
 
 
 def hash_text(text):
