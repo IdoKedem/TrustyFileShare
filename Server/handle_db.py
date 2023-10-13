@@ -39,8 +39,8 @@ def initialize_db(db_instance=None):
     :return:
     """
     run(command="""CREATE TABLE IF NOT EXISTS users(
-        ID INTEGER PRIMARY KEY, username TEXT, password TEXT, isadmin BOOLEAN,
-        UNIQUE(ID, username))""", db_instance=db_instance)
+        ID INTEGER PRIMARY KEY, username TEXT UNIQUE, 
+        password TEXT, isadmin BOOLEAN)""", db_instance=db_instance)
     users = \
         [User('Ido', '123', is_admin=True), User('Kedem', '456')]
 
