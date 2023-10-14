@@ -1,7 +1,10 @@
-from common import LoginEnum, hash_text, User, FileEnum
+import os.path
+
+from common import LoginEnum, hash_text, User, FileEnum, \
+    encapsulate_data, decapsulate_data
 import tkinter as tk
 from tkinter import filedialog
-from typing import List, Dict
+from typing import List, Dict, Optional, Union
 import socket
 
 
@@ -81,7 +84,7 @@ class LoginWindow(BaseWindow):
         validates the inputted credentials with the server
         :return:
         """
-        credentials_string = ''
+        credentials_data = []
 
         for entry_index, entry in enumerate(self.entries):
             entry_text = entry.get()
@@ -89,7 +92,8 @@ class LoginWindow(BaseWindow):
             if entry_index == 1:    # password entry
                 entry_text = hash_text(entry_text)
 
-            credentials_string += ',' + entry_text
+            credentials_data.append(entry_text)
+        credentials_string = encapsulate_data(credentials_data)
 
         self.client_socket.send(LoginEnum.SENDING_LOGIN_INFO.encode())
         self.client_socket.send(credentials_string.encode())
@@ -99,8 +103,9 @@ class LoginWindow(BaseWindow):
         if response == LoginEnum.INVALID_LOGIN_INFO:
             self.labels[response].pack()
         elif response == LoginEnum.VALID_LOGIN_INFO:
+
             user_data = self.client_socket.recv(1024).decode()
-            _, username, password, is_admin = user_data.split(',')
+            username, password, is_admin = decapsulate_data(user_data)
             self.user = User(username, password, is_admin)
 
             self.login_submit_btn.config(state='disabled')
@@ -152,55 +157,114 @@ class MainWindow(BaseWindow):
                          client_socket=client_socket)
         self.user = logged_user
 
-        self.download_menu = MainMenu(self,
-                                      highlightbackground='blue',
-                                      highlightthickness=2)
+        self.main_menu = MainMenu(self,
+                                   highlightbackground='blue',
+                                   highlightthickness=2)
 
-        self.download_menu.pack_frame()
+        self.downloads_menu = DownloadsMenu(self,
+                                             highlightbackground='green',
+                                             highlightthickness=2)
 
-        # tk.Button(text='Upload', command=self.upload_file_to_db,
-        #           font=self.default_font).pack()
-        # tk.Button(text='Download', command=lambda: None,
-        #           font=self.default_font).pack()
+        self.main_menu.pack()
+
+    def show_downloads_menu(self):
+        self.main_menu.pack_forget()
+        self.downloads_menu.pack()
 
     def upload_file_to_db(self):
         file_path = filedialog.askopenfilename(
             title='Select a file to upload',
             filetypes=FileEnum.SUPPORTED_FILE_TYPES)
+        with open(file_path, 'r') as file:
+            file_content = file.read()
+        file_name = os.path.basename(file_path)
         print(file_path)
         print(self.user.username)
+
         file_details_string = \
-            f',{file_path},{self.user.username}'
+            encapsulate_data([file_name, self.user.username, file_content])
         self.client_socket.send(FileEnum.SENDING_FILE_DATA.encode())
         self.client_socket.send(file_details_string.encode())
 
 
-class BaseMenu(tk.Frame):
-    def __init__(self, displayed_on: BaseWindow, frame_args):
+class BaseFrame(tk.Frame):
+    def __init__(self,
+                 displayed_on: Union[BaseWindow, 'BaseFrame'],
+                 frame_args: Optional=None):
+        if not frame_args:
+            frame_args = {}
+
         super().__init__(master=displayed_on, **frame_args)
         self.displayed_on = displayed_on
+
         self.default_font = displayed_on.default_font
+        self.widgets: Dict['tkWidget', Dict[str, str]] = {}
+    def pack_widgets(self):
+        for widget, options in self.widgets.items():
+            widget.pack(**options)
 
-class MainMenu(BaseMenu):
-    def __init__(self, displayed_on: MainWindow, **frame_args):
+class MainMenu(BaseFrame):
+    def __init__(self,
+                 displayed_on: MainWindow,
+                 **frame_args):
+
+        super().__init__(displayed_on=displayed_on,
+                         frame_args=frame_args)
+        self.widgets = {
+            tk.Button(self, text='Upload',
+                      command=displayed_on.upload_file_to_db,
+                      font=self.default_font): {},
+            tk.Button(self, text='Download',
+                      command=displayed_on.show_downloads_menu,
+                      font=self.default_font): {}
+        }
+        self.pack_widgets()
+
+
+
+class DownloadsMenu(BaseFrame):
+    def __init__(self,
+                 displayed_on: MainWindow,
+                 **frame_args):
         super().__init__(displayed_on, frame_args)
-        self.widgets = [
-        tk.Button(self, text='Upload', command=displayed_on.upload_file_to_db,
-                  font=self.default_font),
-        tk.Button(self, text='Download', command=lambda: None,
-                  font=self.default_font)
-        ]
 
-    def pack_frame(self):
-        for widget in self.widgets:
-            widget.pack()
-        self.pack()
-
-class DownloadMenu(BaseMenu):
-    def __init__(self, displayed_on: BaseWindow):
-        super().__init__(displayed_on)
+        file_listbox_frame = \
+            FileListboxFrame(displayed_on=self,
+                             highlightbackground='magenta',
+                             highlightthickness=2)
+        self.widgets = {
+            tk.Label(self,
+                     text='choose a file to download:',
+                     font=self.default_font): {},
+            file_listbox_frame: {}
+        }
+        self.pack_widgets()
 
 
+class FileListboxFrame(BaseFrame):
+    def __init__(self,
+                 displayed_on: DownloadsMenu,
+                 **frame_args):
+
+        super().__init__(displayed_on, frame_args=frame_args)
+
+        self.scrollbar = tk.Scrollbar(self)
+        self.file_listbox = tk.Listbox(self,
+                       selectmode='single',
+                       yscrollcommand=self.scrollbar.set)
+
+        self.widgets = {
+            self.scrollbar: {'side': 'right',
+                             'fill': 'y'},
+            self.file_listbox: {}
+        }
+        self.pack_widgets()
+
+    def fill_listbox(self):
+        self.client_socket = \
+            self.displayed_on.displayed_on.client_socket
+
+        self.client_socket.send(FileEnum.REQUESTING_FILE_DATA.encode())
 
 
 

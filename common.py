@@ -1,4 +1,5 @@
 from hashlib import md5
+from typing import List, Any, Tuple, Union
 from enum import Enum
 
 class SocketEnum:
@@ -16,6 +17,8 @@ class LoginEnum:
 
 class FileEnum:
     SENDING_FILE_DATA = 'Sending File Data!'
+    REQUESTING_FILE_DATA = 'Requesting File Data!'
+
     SUPPORTED_FILE_TYPES = [
         ('Text Files', '*.txt')
     ]
@@ -23,6 +26,18 @@ class FileEnum:
 
 def hash_text(text):
     return md5(text.encode()).hexdigest()
+
+
+def encapsulate_data(data_list:
+                     Union[Tuple[str], List[str]]) -> str:
+    output = ''
+    for data in data_list:
+        output += ',' + data
+    return output
+
+def decapsulate_data(data_string: str):
+    data = data_string.split(',')
+    return tuple(data[1:])
 
 
 class User:

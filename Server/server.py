@@ -1,6 +1,7 @@
 import socket
 from threading import Thread
-from common import SocketEnum, LoginEnum, FileEnum
+from common import SocketEnum, LoginEnum, FileEnum,\
+    encapsulate_data, decapsulate_data
 from typing import Dict
 from handle_2FA import is_token_valid
 
@@ -21,16 +22,12 @@ def receive_msg(client):
             if msg == LoginEnum.SENDING_LOGIN_INFO:
                 check_login(client)
             elif msg == LoginEnum.SENDING_TOTP_TOKEN:
-                token = client.recv(1024).decode()
-                if is_token_valid(token):
-                    client.send(LoginEnum.VALID_TOTP_TOKEN.encode())
-                else:
-                    client.send(LoginEnum.INVALID_TOTP_TOKEN.encode())
+                check_ttop_token(client)
             elif msg == FileEnum.SENDING_FILE_DATA:
-                file_data = client.recv(1024).decode()
-                _, file_path, username = file_data.split(',')
-                from handle_db import add_file_to_db
-                add_file_to_db(file_path, username)
+                receive_file_data(client)
+            elif msg == FileEnum.REQUESTING_FILE_DATA:
+                send_all_files_data(client)
+
 
         except ConnectionResetError:
             # Handle client disconnection
@@ -42,19 +39,36 @@ def check_login(client):
     from handle_db import pull_user_value
 
     login_info = client.recv(1024).decode()
-    _, username, password = login_info.split(',')
+    username, password = decapsulate_data(login_info)
     user_data = pull_user_value(username, password)
     if user_data:
         client.send(LoginEnum.VALID_LOGIN_INFO.encode())
-        user_data_string = ''
+        user_data_list = []
         for i, data in enumerate(user_data):
             if i == 0:   # id
                 continue
-            user_data_string += ',' + data
+            user_data_list.append(data)
+
+        user_data_string = encapsulate_data(user_data_list)
         client.send(user_data_string.encode())
     else:
         client.send(LoginEnum.INVALID_LOGIN_INFO.encode())
 
+def check_ttop_token(client):
+    token = client.recv(1024).decode()
+    if is_token_valid(token):
+        client.send(LoginEnum.VALID_TOTP_TOKEN.encode())
+    else:
+        client.send(LoginEnum.INVALID_TOTP_TOKEN.encode())
+
+def receive_file_data(client):
+    file_data = client.recv(1024).decode()
+    file_name, username, file_content = decapsulate_data(file_data)
+    from handle_db import add_file_to_db
+    add_file_to_db(file_name, username, file_content)
+
+def send_all_files_data(client):
+    pass
 
 if __name__ == '__main__':
     clients: Dict[socket.socket, str] = {}

@@ -1,7 +1,7 @@
 import sqlite3
 
 import common
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
 import os
 
 db_name = 'TFS.db'
@@ -80,16 +80,35 @@ def initialize_db(db_instance=None, is_close_connection=True):
         db_instance=db_instance, is_close_connection=is_close_connection)
 
 
-def add_file_to_db(file_path: str, uploading_user):
-    file_name = os.path.basename(file_path)
-    with open(file_path, 'r') as f:
-        file_content = f.read()
+def add_file_to_db(file_name: str,
+                   file_content: str,
+                   uploading_user: str):
     run(command=f"""INSERT INTO files(filename, uploaded_by, content)
                 VALUES('{file_name}', '{uploading_user}', '{file_content}')""")
 
+def pull_files(db_instance=None,
+               **where_dict):
+    if not db_instance:
+        db_instance = DataBase(db_name)
+
+    query = """SELECT * FROM files WHERE true"""
+
+    values = []
+    for field_name, value in where_dict.items():
+        query += f' AND {field_name} = ?'
+        values.append(value)
+
+    db_instance.cursor.execute(query, tuple(values))
+    files = db_instance.cursor.fetchall()
+    print(files)
+    return files
+
+
 if __name__ == '__main__':
     db_instance = DataBase(db_name)
-    initialize_db(db_instance=db_instance, is_close_connection=False)
+    pull_files(db_instance,
+               filename='itay.txt', uploaded_by='Ido')
+    #initialize_db(db_instance=db_instance, is_close_connection=False)
 
 
 
