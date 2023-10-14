@@ -36,3 +36,5 @@ class User:
     def __str__(self):
         return \
             f'Username: {self.username}\nPassword: {self.password}'
+users = \
+    [User('Ido', '123', is_admin=True), User('Kedem', '456')]

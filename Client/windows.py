@@ -70,6 +70,7 @@ class LoginWindow(BaseWindow):
         self.labels[LoginEnum.INVALID_LOGIN_INFO] = \
             tk.Label(info_frame, text='Try Again',
                      fg='red', font=('', 12))
+
         self.login_submit_btn = \
             tk.Button(info_frame, text='Submit', command=self.check_login,
             height=1, font=self.default_font, cursor='hand2')
@@ -120,7 +121,7 @@ class LoginTopLevel(tk.Toplevel):
         self.token_entry = tk.Entry(self, justify='center',
                                     font=self.default_font, cursor='xterm')
         self.token_entry.pack()
-        tk.Button(self,text='Submit',
+        tk.Button(self, text='Submit',
                   command=self.verify_totp_token,
                   font=self.default_font, cursor='hand2').pack()
     def on_close(self):
@@ -140,22 +141,27 @@ class LoginTopLevel(tk.Toplevel):
         if response == LoginEnum.VALID_TOTP_TOKEN:
             self.destroy()
             self.parent.destroy()
-            MainWindow(title='Main Window',
-                       client_socket=self.client_socket,
+            MainWindow(client_socket=self.client_socket,
                        logged_user=self.user).mainloop()
 
 
 class MainWindow(BaseWindow):
-    def __init__(self, title,
+    def __init__(self,
                  client_socket: socket.socket, logged_user: User):
-        super().__init__(title=title,
+        super().__init__(title='Main Menu',
                          client_socket=client_socket)
         self.user = logged_user
 
-        tk.Button(text='Upload', command=self.upload_file_to_db,
-                  font=self.default_font).pack()
-        tk.Button(text='Download',
-                  font=self.default_font).pack()
+        self.download_menu = MainMenu(self,
+                                      highlightbackground='blue',
+                                      highlightthickness=2)
+
+        self.download_menu.pack_frame()
+
+        # tk.Button(text='Upload', command=self.upload_file_to_db,
+        #           font=self.default_font).pack()
+        # tk.Button(text='Download', command=lambda: None,
+        #           font=self.default_font).pack()
 
     def upload_file_to_db(self):
         file_path = filedialog.askopenfilename(
@@ -167,6 +173,32 @@ class MainWindow(BaseWindow):
             f',{file_path},{self.user.username}'
         self.client_socket.send(FileEnum.SENDING_FILE_DATA.encode())
         self.client_socket.send(file_details_string.encode())
+
+
+class BaseMenu(tk.Frame):
+    def __init__(self, displayed_on: BaseWindow, frame_args):
+        super().__init__(master=displayed_on, **frame_args)
+        self.displayed_on = displayed_on
+        self.default_font = displayed_on.default_font
+
+class MainMenu(BaseMenu):
+    def __init__(self, displayed_on: MainWindow, **frame_args):
+        super().__init__(displayed_on, frame_args)
+        self.widgets = [
+        tk.Button(self, text='Upload', command=displayed_on.upload_file_to_db,
+                  font=self.default_font),
+        tk.Button(self, text='Download', command=lambda: None,
+                  font=self.default_font)
+        ]
+
+    def pack_frame(self):
+        for widget in self.widgets:
+            widget.pack()
+        self.pack()
+
+class DownloadMenu(BaseMenu):
+    def __init__(self, displayed_on: BaseWindow):
+        super().__init__(displayed_on)
 
 
 

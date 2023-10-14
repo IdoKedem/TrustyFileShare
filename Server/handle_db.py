@@ -1,5 +1,6 @@
 import sqlite3
-from common import User
+
+import common
 from typing import Tuple, Optional
 import os
 
@@ -67,10 +68,8 @@ def initialize_db(db_instance=None, is_close_connection=True):
         ID INTEGER PRIMARY KEY, username TEXT UNIQUE, 
         password TEXT, isadmin BOOLEAN)""", db_instance=db_instance,
         is_close_connection=is_close_connection)
-    users = \
-        [User('Ido', '123', is_admin=True), User('Kedem', '456')]
 
-    for user in users:
+    for user in common.users:
         run(command=f"""INSERT OR IGNORE INTO users (username, password, isadmin) 
             VALUES('{user.username}', '{user.password}', '{user.is_admin}')""",
             db_instance=db_instance, is_close_connection=is_close_connection)

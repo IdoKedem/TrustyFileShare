@@ -1,5 +1,6 @@
 import socket
 from common import SocketEnum
+import common
 from windows import LoginWindow, MainWindow
 
 
@@ -10,12 +11,12 @@ def connect_to_server() -> socket.socket:
 
 if __name__ == '__main__':
     client_socket = connect_to_server()
-
+    #
     LoginWindow(title='Login',
                client_socket=client_socket).mainloop()
-
-    # MainWindow(title='Main Window',
-    #            client_socket=client_socket).mainloop()
+    # #
+    # MainWindow(client_socket=client_socket,
+    #            logged_user=common.users[0]).mainloop()
 
 
 
