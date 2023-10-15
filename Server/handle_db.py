@@ -1,7 +1,7 @@
 import sqlite3
 
 import common
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Optional, Dict, List, Any
 import os
 
 db_name = 'TFS.db'
@@ -86,12 +86,22 @@ def add_file_to_db(file_name: str,
     run(command=f"""INSERT INTO files(filename, uploaded_by, content)
                 VALUES('{file_name}', '{uploading_user}', '{file_content}')""")
 
-def pull_files(db_instance=None,
-               **where_dict):
+def pull_files(db_instance: DataBase=None,
+               fields: List[str]=None,
+               where_dict: Dict[str, str]=None):
+    """
+    pulls data about files according to given parameters
+    :param db_instance: instance of the db
+    :param fields: which fields to pull, as a list of strings
+    :param where_dict: a dict of WHERE conditions (fieldname: value)
+    :return:
+    """
     if not db_instance:
         db_instance = DataBase(db_name)
+    if not where_dict:
+        where_dict = {}
 
-    query = """SELECT * FROM files WHERE true"""
+    query = f"""SELECT {', '.join(fields)} FROM files WHERE true"""
 
     values = []
     for field_name, value in where_dict.items():
@@ -107,7 +117,9 @@ def pull_files(db_instance=None,
 if __name__ == '__main__':
     db_instance = DataBase(db_name)
     pull_files(db_instance,
-               filename='itay.txt', uploaded_by='Ido')
+               fields=['filename', 'content'],
+               where_dict={'filename': 'anat.txt',
+                           'uploaded_by': 'Ido'})
     #initialize_db(db_instance=db_instance, is_close_connection=False)
 
 

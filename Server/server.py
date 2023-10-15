@@ -28,7 +28,6 @@ def receive_msg(client):
             elif msg == FileEnum.REQUESTING_FILE_DATA:
                 send_all_files_data(client)
 
-
         except ConnectionResetError:
             # Handle client disconnection
             print(f'Client {clients[client]} disconnected.')
@@ -68,7 +67,8 @@ def receive_file_data(client):
     add_file_to_db(file_name, username, file_content)
 
 def send_all_files_data(client):
-    pass
+    #from handle_db import pull_files
+     pass
 
 if __name__ == '__main__':
     clients: Dict[socket.socket, str] = {}
