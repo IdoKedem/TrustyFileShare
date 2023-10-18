@@ -67,8 +67,8 @@ def receive_file_data(client):
     add_file_to_db(file_name, username, file_content)
 
 def send_all_files_data(client):
-    #from handle_db import pull_files
-     pass
+    from handle_db import pull_files
+
 
 if __name__ == '__main__':
     clients: Dict[socket.socket, str] = {}

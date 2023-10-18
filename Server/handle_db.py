@@ -1,7 +1,7 @@
 import sqlite3
 
 import common
-from typing import Tuple, Optional, Dict, List, Any
+from typing import Tuple, Optional, Dict, List, Any, Union
 import os
 
 db_name = 'TFS.db'
@@ -26,15 +26,22 @@ class DataBase:
     def close(self):
         self.connection.close()
 
-def run(command, db_instance=None,
+def run(command: str,
+        insertion_values: Optional[Tuple]=tuple(),
+        db_instance=None,
         is_close_connection: bool=True):
+    """
+    this function executes the given query
+    :param command: the query to execute.
+    :param insertion_values: values to insert
+    :param db_instance: the instance of the db
+    :param is_close_connection:
+    :return:
+    """
     if not db_instance:
         db_instance = DataBase(db_name)
-    db_instance.cursor.execute(command)
+    db_instance.cursor.execute(command, insertion_values)
     db_instance.connection.commit()
-    if is_close_connection:
-        db_instance.close()
-
 def pull_user_value(username, password,
                     db_instance: Optional[DataBase]=None,
                     is_close_connection: bool=True) -> Optional[Tuple[int, str, str]]:
@@ -68,10 +75,10 @@ def initialize_db(db_instance=None, is_close_connection=True):
         ID INTEGER PRIMARY KEY, username TEXT UNIQUE, 
         password TEXT, isadmin BOOLEAN)""", db_instance=db_instance,
         is_close_connection=is_close_connection)
-
+#{user.username}', '{user.password}', '{user.is_admin}
     for user in common.users:
         run(command=f"""INSERT OR IGNORE INTO users (username, password, isadmin) 
-            VALUES('{user.username}', '{user.password}', '{user.is_admin}')""",
+            VALUES(?, ?, ?)""", insertion_values=(user.username, user.password, user.is_admin),
             db_instance=db_instance, is_close_connection=is_close_connection)
 
     run(command="""CREATE TABLE IF NOT EXISTS files(
@@ -118,7 +125,7 @@ if __name__ == '__main__':
     db_instance = DataBase(db_name)
     pull_files(db_instance,
                fields=['filename', 'content'],
-               where_dict={'filename': 'anat.txt',
+               where_dict={'filename': 'ido.txt',
                            'uploaded_by': 'Ido'})
     #initialize_db(db_instance=db_instance, is_close_connection=False)
 

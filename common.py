@@ -41,7 +41,7 @@ def decapsulate_data(data_string: str):
 
 
 class User:
-    def __init__(self, username, password, is_admin=False):
+    def __init__(self, username: str, password: str, is_admin: bool=False):
         self.username = username
         self.password = hash_text(password)
         self.is_admin = is_admin
