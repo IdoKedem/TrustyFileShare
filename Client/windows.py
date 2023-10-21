@@ -4,7 +4,7 @@ from common import LoginEnum, hash_text, User, FileEnum, \
     encapsulate_data, decapsulate_data
 import tkinter as tk
 from tkinter import filedialog
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Union, Tuple
 import socket
 
 
@@ -169,6 +169,7 @@ class MainWindow(BaseWindow):
 
     def show_downloads_menu(self):
         self.main_menu.pack_forget()
+        self.downloads_menu.file_listbox_frame.fill_listbox()
         self.downloads_menu.pack()
 
     def upload_file_to_db(self):
@@ -198,7 +199,7 @@ class BaseFrame(tk.Frame):
         self.displayed_on = displayed_on
 
         self.default_font = displayed_on.default_font
-        self.widgets: Dict['tkWidget', Dict[str, str]] = {}
+        self.widgets: Dict['TkWidget', Dict[str, str]] = {}
     def pack_widgets(self):
         for widget, options in self.widgets.items():
             widget.pack(**options)
@@ -228,7 +229,7 @@ class DownloadsMenu(BaseFrame):
                  **frame_args):
         super().__init__(displayed_on, frame_args)
 
-        file_listbox_frame = \
+        self.file_listbox_frame = \
             FileListboxFrame(displayed_on=self,
                              highlightbackground='magenta',
                              highlightthickness=2)
@@ -236,7 +237,7 @@ class DownloadsMenu(BaseFrame):
             tk.Label(self,
                      text='choose a file to download:',
                      font=self.default_font): {},
-            file_listbox_frame: {}
+            self.file_listbox_frame: {}
         }
         self.pack_widgets()
 
@@ -247,11 +248,14 @@ class FileListboxFrame(BaseFrame):
                  **frame_args):
 
         super().__init__(displayed_on, frame_args=frame_args)
+        self.client_socket = \
+            self.displayed_on.displayed_on.client_socket
 
         self.scrollbar = tk.Scrollbar(self)
         self.file_listbox = tk.Listbox(self,
                        selectmode='single',
-                       yscrollcommand=self.scrollbar.set)
+                       yscrollcommand=self.scrollbar.set,
+                       font=self.default_font)
 
         self.widgets = {
             self.scrollbar: {'side': 'right',
@@ -261,10 +265,21 @@ class FileListboxFrame(BaseFrame):
         self.pack_widgets()
 
     def fill_listbox(self):
-        self.client_socket = \
-            self.displayed_on.displayed_on.client_socket
+        self.client_socket.send(
+            FileEnum.REQUESTING_ALL_FILE_TITLES.encode())
+        file_count = int(self.client_socket.recv(1024))
 
-        self.client_socket.send(FileEnum.REQUESTING_FILE_DATA.encode())
+        self.file_titles: List[List[str, str]] = []
+        for _ in range(file_count):
+            file_tile: Tuple[str, str] = decapsulate_data(
+                self.client_socket.recv(1024).decode())
+            self.file_titles.append([*file_tile])
 
+        for row_data in self.file_titles:
+            filename, uploaded_by = row_data
+            formatted_row = f'{filename} ({uploaded_by})'
+            print(formatted_row)
+            self.file_listbox.insert(tk.END, formatted_row)
 
-
+        for title in self.file_titles:
+            print(title)

@@ -69,13 +69,11 @@ def initialize_db(db_instance=None, is_close_connection=True):
     only adds users that dont already exist
     :return:
     """
-    if db_instance:
-        is_close_connection = False
     run(command="""CREATE TABLE IF NOT EXISTS users(
         ID INTEGER PRIMARY KEY, username TEXT UNIQUE, 
         password TEXT, isadmin BOOLEAN)""", db_instance=db_instance,
         is_close_connection=is_close_connection)
-#{user.username}', '{user.password}', '{user.is_admin}
+
     for user in common.users:
         run(command=f"""INSERT OR IGNORE INTO users (username, password, isadmin) 
             VALUES(?, ?, ?)""", insertion_values=(user.username, user.password, user.is_admin),
@@ -88,14 +86,14 @@ def initialize_db(db_instance=None, is_close_connection=True):
 
 
 def add_file_to_db(file_name: str,
-                   file_content: str,
-                   uploading_user: str):
+                   uploading_user: str,
+                   file_content: str):
     run(command=f"""INSERT INTO files(filename, uploaded_by, content)
                 VALUES('{file_name}', '{uploading_user}', '{file_content}')""")
 
 def pull_files(db_instance: DataBase=None,
                fields: List[str]=None,
-               where_dict: Dict[str, str]=None):
+               where_dict: Dict[str, str]=None) -> List[Tuple]:
     """
     pulls data about files according to given parameters
     :param db_instance: instance of the db
@@ -110,11 +108,12 @@ def pull_files(db_instance: DataBase=None,
 
     query = f"""SELECT {', '.join(fields)} FROM files WHERE true"""
 
+    print(query)
     values = []
     for field_name, value in where_dict.items():
         query += f' AND {field_name} = ?'
         values.append(value)
-
+    print(query)
     db_instance.cursor.execute(query, tuple(values))
     files = db_instance.cursor.fetchall()
     print(files)
@@ -123,11 +122,12 @@ def pull_files(db_instance: DataBase=None,
 
 if __name__ == '__main__':
     db_instance = DataBase(db_name)
-    pull_files(db_instance,
-               fields=['filename', 'content'],
-               where_dict={'filename': 'ido.txt',
-                           'uploaded_by': 'Ido'})
-    #initialize_db(db_instance=db_instance, is_close_connection=False)
+    initialize_db(db_instance)
+
+    # pull_files(db_instance,
+    #            fields=['filename', 'content'],
+    #            where_dict={'filename': 'ido.txt',
+    #                        'uploaded_by': 'Ido'})
 
 
 

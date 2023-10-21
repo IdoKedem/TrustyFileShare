@@ -19,6 +19,11 @@ class FileEnum:
     SENDING_FILE_DATA = 'Sending File Data!'
     REQUESTING_FILE_DATA = 'Requesting File Data!'
 
+    REQUESTING_ALL_FILE_TITLES = 'Requesting File Titles!'
+
+    SENDING_FILE_COUNT = 'Sending File Count!'
+
+
     SUPPORTED_FILE_TYPES = [
         ('Text Files', '*.txt')
     ]
@@ -31,6 +36,7 @@ def hash_text(text):
 def encapsulate_data(data_list:
                      Union[Tuple[str], List[str]]) -> str:
     output = ''
+    print(data_list)
     for data in data_list:
         output += ',' + data
     return output
@@ -41,7 +47,7 @@ def decapsulate_data(data_string: str):
 
 
 class User:
-    def __init__(self, username: str, password: str, is_admin: bool=False):
+    def __init__(self, username: str, password: str, is_admin: str='False'):
         self.username = username
         self.password = hash_text(password)
         self.is_admin = is_admin
@@ -52,4 +58,4 @@ class User:
         return \
             f'Username: {self.username}\nPassword: {self.password}'
 users = \
-    [User('Ido', '123', is_admin=True), User('Kedem', '456')]
+    [User('Ido', '123', is_admin='True'), User('Kedem', '456')]

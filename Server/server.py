@@ -2,7 +2,7 @@ import socket
 from threading import Thread
 from common import SocketEnum, LoginEnum, FileEnum,\
     encapsulate_data, decapsulate_data
-from typing import Dict
+from typing import Dict, List, Tuple
 from handle_2FA import is_token_valid
 
 def accept_client():
@@ -25,8 +25,8 @@ def receive_msg(client):
                 check_ttop_token(client)
             elif msg == FileEnum.SENDING_FILE_DATA:
                 receive_file_data(client)
-            elif msg == FileEnum.REQUESTING_FILE_DATA:
-                send_all_files_data(client)
+            elif msg == FileEnum.REQUESTING_ALL_FILE_TITLES:
+                send_all_files_titles(client)
 
         except ConnectionResetError:
             # Handle client disconnection
@@ -66,8 +66,18 @@ def receive_file_data(client):
     from handle_db import add_file_to_db
     add_file_to_db(file_name, username, file_content)
 
-def send_all_files_data(client):
+def send_all_files_titles(client):
     from handle_db import pull_files
+    all_file_titles: List[Tuple] \
+        = pull_files(fields=['filename',
+                             'uploaded_by'])
+    print(all_file_titles)
+    file_count = str(len(all_file_titles))
+    client.send(file_count.encode())
+    for file_title in all_file_titles:
+        client.send(encapsulate_data(file_title).encode())
+
+
 
 
 if __name__ == '__main__':
