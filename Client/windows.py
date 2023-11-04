@@ -169,8 +169,11 @@ class MainWindow(BaseWindow):
 
     def show_downloads_menu(self):
         self.main_menu.pack_forget()
-        self.downloads_menu.file_listbox_frame.fill_listbox()
-        self.downloads_menu.pack()
+        self.downloads_menu.file_listbox_frame.show_file_titles()
+        self.downloads_menu.pack(fill='x')
+    def show_main_menu(self):
+        self.downloads_menu.pack_forget()
+        self.main_menu.pack()
 
     def upload_file_to_db(self):
         file_path = filedialog.askopenfilename(
@@ -233,14 +236,31 @@ class DownloadsMenu(BaseFrame):
             FileListboxFrame(displayed_on=self,
                              highlightbackground='magenta',
                              highlightthickness=2)
+
         self.widgets = {
             tk.Label(self,
                      text='choose a file to download:',
                      font=self.default_font): {},
-            self.file_listbox_frame: {}
+            tk.Button(self,
+                      text='Back',
+                      font=self.default_font,
+                      command=self.displayed_on.show_main_menu) : {},
+            self.file_listbox_frame: {'fill': 'x'},
+            tk.Button(self,
+                      text='↻',
+                      font=('' , 16),
+                      command=self.file_listbox_frame.show_file_titles,
+                      bg='lightgrey',
+                      width=2,
+                      height=1): {'side': tk.LEFT},
+            tk.Button(self,
+                      text='Download',
+                      font=self.default_font,
+                      ) : {}
         }
         self.pack_widgets()
-
+    def request_file(self):
+        pass
 
 class FileListboxFrame(BaseFrame):
     def __init__(self,
@@ -252,7 +272,7 @@ class FileListboxFrame(BaseFrame):
             self.displayed_on.displayed_on.client_socket
 
         self.scrollbar = tk.Scrollbar(self)
-        self.file_listbox = tk.Listbox(self,
+        self.listbox = tk.Listbox(self,
                        selectmode='single',
                        yscrollcommand=self.scrollbar.set,
                        font=self.default_font)
@@ -260,26 +280,24 @@ class FileListboxFrame(BaseFrame):
         self.widgets = {
             self.scrollbar: {'side': 'right',
                              'fill': 'y'},
-            self.file_listbox: {}
+            self.listbox: {'fill': 'x'}
         }
         self.pack_widgets()
 
-    def fill_listbox(self):
+    def show_file_titles(self):
+        self.listbox.delete(0, tk.END)
         self.client_socket.send(
             FileEnum.REQUESTING_ALL_FILE_TITLES.encode())
         file_count = int(self.client_socket.recv(1024))
 
-        self.file_titles: List[List[str, str]] = []
+        file_titles: List[List[str, str, str]] = []
         for _ in range(file_count):
-            file_tile: Tuple[str, str] = decapsulate_data(
+            file_title: Tuple[str, str, str] = decapsulate_data(
                 self.client_socket.recv(1024).decode())
-            self.file_titles.append([*file_tile])
+            file_titles.append([*file_title])
 
-        for row_data in self.file_titles:
-            filename, uploaded_by = row_data
-            formatted_row = f'{filename} ({uploaded_by})'
-            print(formatted_row)
-            self.file_listbox.insert(tk.END, formatted_row)
-
-        for title in self.file_titles:
-            print(title)
+        for ind, row_data in enumerate(file_titles):
+            filename, uploaded_by, upload_time = row_data
+            formatted_row = \
+                f'{ind + 1}. {filename} ({uploaded_by}, {upload_time})'
+            self.listbox.insert(tk.END, formatted_row)

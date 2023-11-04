@@ -1,5 +1,5 @@
 import sqlite3
-
+from datetime import datetime
 import common
 from typing import Tuple, Optional, Dict, List, Any, Union
 import os
@@ -81,15 +81,20 @@ def initialize_db(db_instance=None, is_close_connection=True):
 
     run(command="""CREATE TABLE IF NOT EXISTS files(
                 ID INTEGER PRIMARY KEY, filename TEXT, 
-                uploaded_by TEXT, content TEXT)""",
+                uploaded_by TEXT, upload_time TEXT, content TEXT)""",
         db_instance=db_instance, is_close_connection=is_close_connection)
 
 
 def add_file_to_db(file_name: str,
                    uploading_user: str,
                    file_content: str):
-    run(command=f"""INSERT INTO files(filename, uploaded_by, content)
-                VALUES('{file_name}', '{uploading_user}', '{file_content}')""")
+    cur_time = datetime.now()
+    upload_time = cur_time.strftime('%d/%m/%y %H:%M:%S')
+
+    run(command=f"""INSERT INTO files(filename, uploaded_by,
+                                      upload_time, content)
+                VALUES('{file_name}', '{uploading_user}', 
+                       '{upload_time}', '{file_content}')""")
 
 def pull_files(db_instance: DataBase=None,
                fields: List[str]=None,
