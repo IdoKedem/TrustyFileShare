@@ -26,10 +26,9 @@ def is_token_valid(user_input_token):
     return totp.verify(user_input_token) \
            or user_input_token == '69'
 
-def get_totp():
-    if not os.path.isfile('Server/2FA/key.txt'):
-        print('No key found')
-        return
-    with open('Server/2FA/key.txt', 'r') as f:
+def get_totp(path_to_key='2FA/key.txt'):
+    assert os.path.isfile(path_to_key), \
+            'no key found'
+    with open(path_to_key, 'r') as f:
         key = key_decryption(f.read())
     return pyotp.TOTP(key)

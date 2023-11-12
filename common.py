@@ -22,6 +22,7 @@ class FileEnum:
     REQUESTING_ALL_FILE_TITLES = 'Requesting File Titles!'
 
     SENDING_FILE_COUNT = 'Sending File Count!'
+    SENDING_FILE_SIZE = 'Sending File Size'
 
 
     SUPPORTED_FILE_TYPES = [

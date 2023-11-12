@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import filedialog
 from typing import List, Dict, Optional, Union, Tuple
 import socket
-
+from pathlib import Path
 
 class BaseWindow(tk.Tk):
     def __init__(self, title: str, client_socket: socket.socket,
@@ -176,17 +176,17 @@ class MainWindow(BaseWindow):
         self.main_menu.pack()
 
     def upload_file_to_db(self):
-        file_path = filedialog.askopenfilename(
+        file_path= filedialog.askopenfilename(
             title='Select a file to upload',
             filetypes=FileEnum.SUPPORTED_FILE_TYPES)
         with open(file_path, 'r') as file:
             file_content = file.read()
         file_name = os.path.basename(file_path)
-        print(file_path)
-        print(self.user.username)
+        file_extension = os.path.splitext(file_path)[-1]
 
         file_details_string = \
-            encapsulate_data([file_name, self.user.username, file_content])
+            encapsulate_data([file_name, file_extension,
+                              self.user.username, file_content])
         self.client_socket.send(FileEnum.SENDING_FILE_DATA.encode())
         self.client_socket.send(file_details_string.encode())
 
@@ -231,6 +231,7 @@ class DownloadsMenu(BaseFrame):
                  displayed_on: MainWindow,
                  **frame_args):
         super().__init__(displayed_on, frame_args)
+        self.client_socket = self.displayed_on.client_socket
 
         self.file_listbox_frame = \
             FileListboxFrame(displayed_on=self,
@@ -256,12 +257,17 @@ class DownloadsMenu(BaseFrame):
             tk.Button(self,
                       text='Download',
                       font=self.default_font,
-                      ) : {}
+                      command=self.request_file) : {}
         }
         self.pack_widgets()
     def request_file(self):
-        pass
+        requested_file_ind: int = self.file_listbox_frame.listbox.curselection()[0] + 1
+        self.client_socket.send(FileEnum.REQUESTING_FILE_DATA.encode())
+        self.client_socket.send(str(requested_file_ind).encode())
 
+        file_size = int(self.client_socket.recv(1024).decode())
+        file_content = self.client_socket.recv(file_size).decode()
+        print(file_content)
 class FileListboxFrame(BaseFrame):
     def __init__(self,
                  displayed_on: DownloadsMenu,

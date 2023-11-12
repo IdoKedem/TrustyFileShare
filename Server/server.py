@@ -27,6 +27,8 @@ def receive_msg(client):
                 receive_file_data(client)
             elif msg == FileEnum.REQUESTING_ALL_FILE_TITLES:
                 send_all_files_titles(client)
+            elif msg == FileEnum.REQUESTING_FILE_DATA:
+                send_file_data(client)
 
         except ConnectionResetError:
             # Handle client disconnection
@@ -62,9 +64,13 @@ def check_ttop_token(client):
 
 def receive_file_data(client):
     file_data = client.recv(1024).decode()
-    file_name, username, file_content = decapsulate_data(file_data)
+    file_name, file_extension, \
+        username, file_content = decapsulate_data(file_data)
     from handle_db import add_file_to_db
-    add_file_to_db(file_name, username, file_content)
+    add_file_to_db(file_name=file_name,
+                   file_extension=file_extension,
+                   uploading_user=username,
+                   file_content=file_content)
 
 def send_all_files_titles(client):
     from handle_db import pull_files
@@ -78,7 +84,17 @@ def send_all_files_titles(client):
     for file_title in all_file_titles:
         client.send(encapsulate_data(file_title).encode())
 
+def send_file_data(client):
+    from handle_db import pull_files
+    file_ind: str = client.recv(1024).decode()
+    file_content: str = \
+        pull_files(fields=['content'],
+                   where_dict={'ID': file_ind})[0][0]
+    print(file_content)
+    bytes_file_content: bytes = file_content.encode()
 
+    client.send(str(len(bytes_file_content)).encode())
+    client.send(bytes_file_content)
 
 
 if __name__ == '__main__':

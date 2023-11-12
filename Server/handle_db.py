@@ -80,21 +80,28 @@ def initialize_db(db_instance=None, is_close_connection=True):
             db_instance=db_instance, is_close_connection=is_close_connection)
 
     run(command="""CREATE TABLE IF NOT EXISTS files(
-                ID INTEGER PRIMARY KEY, filename TEXT, 
-                uploaded_by TEXT, upload_time TEXT, content TEXT)""",
+                ID INTEGER PRIMARY KEY,
+                filename TEXT,
+                fileext TEXT,
+                uploaded_by TEXT,
+                upload_time TEXT,
+                content TEXT)""",
         db_instance=db_instance, is_close_connection=is_close_connection)
 
 
 def add_file_to_db(file_name: str,
+                   file_extension: str,
                    uploading_user: str,
                    file_content: str):
     cur_time = datetime.now()
     upload_time = cur_time.strftime('%d/%m/%y %H:%M:%S')
 
-    run(command=f"""INSERT INTO files(filename, uploaded_by,
-                                      upload_time, content)
-                VALUES('{file_name}', '{uploading_user}', 
-                       '{upload_time}', '{file_content}')""")
+    run(command=f"""INSERT INTO files(filename, fileext,
+                                      uploaded_by, upload_time,
+                                      content)
+                VALUES('{file_name}', '{file_extension}', 
+                       '{uploading_user}', '{upload_time}',
+                       '{file_content}')""")
 
 def pull_files(db_instance: DataBase=None,
                fields: List[str]=None,
@@ -103,8 +110,8 @@ def pull_files(db_instance: DataBase=None,
     pulls data about files according to given parameters
     :param db_instance: instance of the db
     :param fields: which fields to pull, as a list of strings
-    :param where_dict: a dict of WHERE conditions (fieldname: value)
-    :return:
+    :param where_dict: a dict of WHERE conditions (field_name: value)
+    :return: list of tuples, where in each tuple are the requested fields
     """
     if not db_instance:
         db_instance = DataBase(db_name)
@@ -113,15 +120,12 @@ def pull_files(db_instance: DataBase=None,
 
     query = f"""SELECT {', '.join(fields)} FROM files WHERE true"""
 
-    print(query)
     values = []
     for field_name, value in where_dict.items():
         query += f' AND {field_name} = ?'
         values.append(value)
-    print(query)
     db_instance.cursor.execute(query, tuple(values))
     files = db_instance.cursor.fetchall()
-    print(files)
     return files
 
 
