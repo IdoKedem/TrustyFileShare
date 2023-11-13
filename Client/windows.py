@@ -193,7 +193,7 @@ class MainWindow(BaseWindow):
         self.client_socket.send(FileEnum.SENDING_FILE_DATA.encode())
         self.client_socket.send(file_details_string.encode())
 
-#test
+#test2
 class BaseFrame(tk.Frame):
     def __init__(self,
                  displayed_on: Union[BaseWindow, 'BaseFrame'],
