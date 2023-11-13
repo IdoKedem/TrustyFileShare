@@ -3,7 +3,7 @@ from typing import List, Any, Tuple, Union
 from enum import Enum
 
 class SocketEnum:
-    SERVER_IP = '192.168.56.1'
+    SERVER_IP = '172.20.132.151'
     PORT = 6666
 
 class LoginEnum:
@@ -26,7 +26,8 @@ class FileEnum:
 
 
     SUPPORTED_FILE_TYPES = [
-        ('Text Files', '*.txt')
+        ('Text Files', '*.txt'),
+        ('JPGs', '*.jpg')
     ]
 
 

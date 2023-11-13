@@ -1,5 +1,5 @@
 import os.path
-
+from tkinter import messagebox
 from common import LoginEnum, hash_text, User, FileEnum, \
     encapsulate_data, decapsulate_data
 import tkinter as tk
@@ -176,16 +176,19 @@ class MainWindow(BaseWindow):
         self.main_menu.pack()
 
     def upload_file_to_db(self):
-        file_path= filedialog.askopenfilename(
+        file_path = filedialog.askopenfilename(
             title='Select a file to upload',
             filetypes=FileEnum.SUPPORTED_FILE_TYPES)
         with open(file_path, 'r') as file:
             file_content = file.read()
+        if not file_content:
+            messagebox.showerror(title='Error',
+                                 message='Unable to upload an empty file')
+            return
         file_name = os.path.basename(file_path)
-        file_extension = os.path.splitext(file_path)[-1]
 
         file_details_string = \
-            encapsulate_data([file_name, file_extension,
+            encapsulate_data([file_name,
                               self.user.username, file_content])
         self.client_socket.send(FileEnum.SENDING_FILE_DATA.encode())
         self.client_socket.send(file_details_string.encode())
@@ -245,11 +248,11 @@ class DownloadsMenu(BaseFrame):
             tk.Button(self,
                       text='Back',
                       font=self.default_font,
-                      command=self.displayed_on.show_main_menu) : {},
+                      command=self.displayed_on.show_main_menu): {},
             self.file_listbox_frame: {'fill': 'x'},
             tk.Button(self,
                       text='↻',
-                      font=('' , 16),
+                      font=('', 16),
                       command=self.file_listbox_frame.show_file_titles,
                       bg='lightgrey',
                       width=2,
@@ -265,9 +268,18 @@ class DownloadsMenu(BaseFrame):
         self.client_socket.send(FileEnum.REQUESTING_FILE_DATA.encode())
         self.client_socket.send(str(requested_file_ind).encode())
 
+        file_name = self.client_socket.recv(1024).decode()
+        print(file_name)
         file_size = int(self.client_socket.recv(1024).decode())
         file_content = self.client_socket.recv(file_size).decode()
         print(file_content)
+
+        if not os.path.exists('Downloads'):
+            os.mkdir('Downloads')
+        with open(f'Downloads/{file_name}', 'w') as f:
+            f.write(file_content)
+
+
 class FileListboxFrame(BaseFrame):
     def __init__(self,
                  displayed_on: DownloadsMenu,
