@@ -4,6 +4,7 @@ from common import SocketEnum, LoginEnum, FileEnum,\
     encapsulate_data, decapsulate_data
 from typing import Dict, List, Tuple
 from handle_2FA import is_token_valid
+import time
 
 def accept_client():
     while True:
@@ -96,6 +97,7 @@ def send_file_data(client):
     bytes_file_size: int = len(file_content.encode())
 
     client.send(str(bytes_file_size).encode())
+    time.sleep(0.2)   # prevent client recieveing two message with one recv()
     client.send(file_content.encode())
 
 

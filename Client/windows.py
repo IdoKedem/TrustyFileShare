@@ -179,7 +179,7 @@ class MainWindow(BaseWindow):
         file_path = filedialog.askopenfilename(
             title='Select a file to upload',
             filetypes=FileEnum.SUPPORTED_FILE_TYPES)
-        with open(file_path, 'r') as file:
+        with open(file_path, 'rb') as file:
             file_content = file.read()
         if not file_content:
             messagebox.showerror(title='Error',
@@ -260,7 +260,7 @@ class DownloadsMenu(BaseFrame):
             tk.Button(self,
                       text='Download',
                       font=self.default_font,
-                      command=self.request_file) : {}
+                      command=self.request_file): {}
         }
         self.pack_widgets()
     def request_file(self):

@@ -36,12 +36,17 @@ def hash_text(text):
 
 
 def encapsulate_data(data_list:
-                     Union[Tuple[str], List[str]]) -> str:
-    output = ''
-    print(data_list)
+                     Union[Tuple[Union[str, bytes], ...],
+                           List[Union[str, bytes]]]) -> str:
+    output = b''
+    #print(data_list)
     for data in data_list:
         output += ',' + data
     return output
+        if isinstance(data, str):
+            data = data.encode()
+        output += b',' + data
+    return output.decode()
 
 def decapsulate_data(data_string: str):
     data = data_string.split(',')

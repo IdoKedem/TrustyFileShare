@@ -29,6 +29,6 @@ def is_token_valid(user_input_token):
 def get_totp(path_to_key='2FA/key.txt'):
     assert os.path.isfile(path_to_key), \
             'no key found'
-    with open(path_to_key, 'r') as f:
+    with open(path_to_key, 'r') as f:    # TODO: chnage mode to 'rb'
         key = key_decryption(f.read())
     return pyotp.TOTP(key)
