@@ -84,7 +84,7 @@ def initialize_db(db_instance=None, is_close_connection=True):
                 filename TEXT,
                 uploaded_by TEXT,
                 upload_time TEXT,
-                content BLOB)""",
+                content TEXT)""",
         db_instance=db_instance, is_close_connection=is_close_connection)
 
 

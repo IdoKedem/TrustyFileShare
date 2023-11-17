@@ -5,6 +5,7 @@ from enum import Enum
 class SocketEnum:
     SERVER_IP = '127.0.0.1'
     PORT = 6666
+    SPLIT_TEXT = '!@#$%^&*()'
 
 class LoginEnum:
     SENDING_LOGIN_INFO = 'Sending Login Info!'
@@ -26,8 +27,10 @@ class FileEnum:
 
 
     SUPPORTED_FILE_TYPES = [
+        ('All Files', '*.txt;*.jpg;*.jpeg;*.mp4'),
         ('Text Files', '*.txt'),
-        ('JPGs', '*.jpg')
+        ('JPGs', '*.jpg;*.jpeg'),
+        ('MP4s', '*.mp4')
     ]
 
 
@@ -43,11 +46,11 @@ def encapsulate_data(data_list:
     for data in data_list:
         if isinstance(data, str):
             data = data.encode()
-        output += b',' + data
+        output += SocketEnum.SPLIT_TEXT.encode() + data
     return output
 
 def decapsulate_data(data_string: bytes) -> Tuple[bytes, ...]:
-    data = data_string.split(b',')
+    data = data_string.split(SocketEnum.SPLIT_TEXT.encode())
     return tuple(data[1:])
 
 
