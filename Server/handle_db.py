@@ -84,22 +84,22 @@ def initialize_db(db_instance=None, is_close_connection=True):
                 filename TEXT,
                 uploaded_by TEXT,
                 upload_time TEXT,
-                content TEXT)""",
+                content BLOB)""",
         db_instance=db_instance, is_close_connection=is_close_connection)
 
 
 def add_file_to_db(file_name: str,
                    uploading_user: str,
-                   file_content: str):
+                   file_content: bytes):
     cur_time = datetime.now()
     upload_time = cur_time.strftime('%d/%m/%y %H:%M:%S')
 
     run(command=f"""INSERT INTO files(filename,
                                       uploaded_by, upload_time,
                                       content)
-                VALUES('{file_name}',
-                       '{uploading_user}', '{upload_time}',
-                       '{file_content}')""")
+                VALUES(?, ?, ?, ?)""",
+        insertion_values=(file_name, uploading_user, upload_time,
+                          file_content.hex()))
 
 def pull_files(db_instance: DataBase=None,
                fields: List[str]=None,

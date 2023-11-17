@@ -3,7 +3,7 @@ from typing import List, Any, Tuple, Union
 from enum import Enum
 
 class SocketEnum:
-    SERVER_IP = '172.20.132.151'
+    SERVER_IP = '127.0.0.1'
     PORT = 6666
 
 class LoginEnum:
@@ -37,19 +37,17 @@ def hash_text(text):
 
 def encapsulate_data(data_list:
                      Union[Tuple[Union[str, bytes], ...],
-                           List[Union[str, bytes]]]) -> str:
+                           List[Union[str, bytes]]]) -> bytes:
     output = b''
     #print(data_list)
     for data in data_list:
-        output += ',' + data
-    return output
         if isinstance(data, str):
             data = data.encode()
         output += b',' + data
-    return output.decode()
+    return output
 
-def decapsulate_data(data_string: str):
-    data = data_string.split(',')
+def decapsulate_data(data_string: bytes) -> Tuple[bytes, ...]:
+    data = data_string.split(b',')
     return tuple(data[1:])
 
 

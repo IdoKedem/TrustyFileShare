@@ -1,10 +1,10 @@
 import pyotp, qrcode
 import os
 from handle_encryption import \
-    key_encryption, key_decryption
+    encrypt, decrypt
 
 def generate_new_key():
-    secret_key = key_encryption(pyotp.random_base32())
+    secret_key = encrypt(pyotp.random_base32())
     with open('2FA/key.txt', 'w') as f:
         f.write(secret_key)
 
@@ -30,5 +30,5 @@ def get_totp(path_to_key='2FA/key.txt'):
     assert os.path.isfile(path_to_key), \
             'no key found'
     with open(path_to_key, 'r') as f:    # TODO: chnage mode to 'rb'
-        key = key_decryption(f.read())
+        key = decrypt(f.read())
     return pyotp.TOTP(key)

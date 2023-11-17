@@ -1,27 +1,23 @@
 
 shift = 3
-def key_encryption(plain_key: str) -> bytes:
+def encrypt(plain_key: bytes, shift=shift) -> bytes:
     midpoint = len(plain_key) // 2
     mixed_plain_key = plain_key[midpoint:] + \
                 plain_key[:midpoint]
 
-    encrypted_key = ''
+    encrypted_key = b''
     for char in mixed_plain_key:
-        encrypted_key += chr(ord(char) + shift)
+        encrypted_key += chr(char + shift).encode()
 
-    return encrypted_key.encode()
+    return encrypted_key
 
-def key_decryption(cipher_key: bytes) -> str:
-    mixed_cipher_key = ''
+def decrypt(cipher_key: bytes, shift=shift) -> bytes:
+    mixed_cipher_key = b''
     for char in cipher_key:
-        mixed_cipher_key += chr(ord(char) - shift)
+        mixed_cipher_key += (chr(char - shift)).encode()
 
     midpoint = len(mixed_cipher_key) // 2
     decrypted_utf8 = mixed_cipher_key[midpoint:] + \
                      mixed_cipher_key[:midpoint]
 
-    return decrypted_utf8.decode()
-
-
-with open('file.txt', 'wb') as f:
-    f.write(b'idokedem')
+    return decrypted_utf8

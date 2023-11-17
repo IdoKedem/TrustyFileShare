@@ -52,7 +52,7 @@ def check_login(client):
             user_data_list.append(data)
 
         user_data_string = encapsulate_data(user_data_list)
-        client.send(user_data_string.encode())
+        client.send(user_data_string)
     else:
         client.send(LoginEnum.INVALID_LOGIN_INFO.encode())
 
@@ -64,12 +64,12 @@ def check_ttop_token(client):
         client.send(LoginEnum.INVALID_TOTP_TOKEN.encode())
 
 def receive_file_data(client):
-    file_data = client.recv(1024).decode()
+    file_data = client.recv(1024)
     file_name, username, file_content = \
         decapsulate_data(file_data)
     from handle_db import add_file_to_db
-    add_file_to_db(file_name=file_name,
-                   uploading_user=username,
+    add_file_to_db(file_name=file_name.decode(),
+                   uploading_user=username.decode(),
                    file_content=file_content)
 
 def send_all_files_titles(client):
@@ -78,11 +78,11 @@ def send_all_files_titles(client):
         = pull_files(fields=['filename',
                              'uploaded_by',
                              'upload_time'])
-    print(all_file_titles)
+    #print(all_file_titles)
     file_count = str(len(all_file_titles))
     client.send(file_count.encode())
     for file_title in all_file_titles:
-        client.send(encapsulate_data(file_title).encode())
+        client.send(encapsulate_data(file_title))
 
 def send_file_data(client):
     from handle_db import pull_files

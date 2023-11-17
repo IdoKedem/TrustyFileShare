@@ -96,7 +96,7 @@ class LoginWindow(BaseWindow):
         credentials_string = encapsulate_data(credentials_data)
 
         self.client_socket.send(LoginEnum.SENDING_LOGIN_INFO.encode())
-        self.client_socket.send(credentials_string.encode())
+        self.client_socket.send(credentials_string)
 
         response = self.client_socket.recv(1024).decode()
 
@@ -191,7 +191,7 @@ class MainWindow(BaseWindow):
             encapsulate_data([file_name,
                               self.user.username, file_content])
         self.client_socket.send(FileEnum.SENDING_FILE_DATA.encode())
-        self.client_socket.send(file_details_string.encode())
+        self.client_socket.send(file_details_string)
 
 #test2
 class BaseFrame(tk.Frame):
