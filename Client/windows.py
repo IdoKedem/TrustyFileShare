@@ -7,6 +7,9 @@ from tkinter import filedialog
 from typing import List, Dict, Optional, Union, Tuple
 import socket
 import time
+
+
+
 class BaseWindow(tk.Tk):
     def __init__(self, title: str, client_socket: socket.socket,
                  width: int=800, height: int=800):
@@ -20,141 +23,49 @@ class BaseWindow(tk.Tk):
         self.client_socket = client_socket
 
 
-class LoginWindow(BaseWindow):
-    def __init__(self, title: str, client_socket: socket.socket):
-        super().__init__(title, client_socket)
+class BaseFrame(tk.Frame):
+    def __init__(self,
+                 displayed_on: Union[BaseWindow, 'BaseFrame'],
+                 frame_args: Optional=None):
+        if not frame_args:
+            frame_args = {}
 
-        self.entries: List[tk.Entry] = []
-        self.labels: Dict[str, tk.Label] = {}
+        super().__init__(master=displayed_on, **frame_args)
+        self.displayed_on = displayed_on
 
-        self.prepare_window()
+        self.default_font = displayed_on.default_font
+        self.widgets: Dict['TkWidget', Dict[str, str]] = {}
+        self.client_socket = displayed_on.client_socket
+    def pack_widgets(self):
+        for widget, options in self.widgets.items():
+            widget.pack(**options)
 
-    def prepare_window(self):
+    def prepare_form_entry(self, entry_name, entry_show=None):
         """
-        prepares the login window, with all its widgets
-        :return:
+        prepares a frame as a form.
+        :param entry_name: name of the entry, shown in label
+        :param entry_show: entry's 'show' param
+        :return: the entry, to fetch output
         """
-        tk.Label(text="TFS by Ido Kedem", font=('', 30)).pack()
+        self.pack()
+        tk.Label(self, text=entry_name + ':',
+                 font=self.default_font).pack(side=tk.LEFT)
+        entry = tk.Entry(self, border=2, show=entry_show,
+                         font=self.default_font, cursor='xterm')
+        entry.pack()
+        return entry
 
-        info_frame = tk.Frame(self)
-        info_frame.pack(pady=60)
-        def _prepare_frame(frame, entry_name, entry_show=None):
-            """
-            prepares a frame. used with username and password frames
-            :param frame: a frame to fill with widgets
-            :param entry_name: name of the entry, shown in label
-            :param entry_show: entry's 'show' param
-            :return:
-            """
-            frame.pack()
-            tk.Label(frame, text=entry_name + ':',
-                     font=self.default_font).pack(side=tk.LEFT)
-            entry = tk.Entry(frame, border=2, show=entry_show,
-                    font=self.default_font, cursor='xterm')
-            self.entries.append(entry)
-            entry.pack()
-
-        tk.Label(info_frame, text='Login',
-                 font=('', 24)).pack()
-
-        username_frame = \
-            tk.Frame(info_frame,
-                     width=400, height=100, pady=15)
-        _prepare_frame(frame=username_frame,
-                       entry_name='Username')
-
-        password_frame = \
-            tk.Frame(info_frame,
-                     width=400, height=100, pady=5)
-        _prepare_frame(frame=password_frame,
-                       entry_name='Password', entry_show='*')
-
-        self.labels[LoginEnum.INVALID_LOGIN_INFO] = \
-            tk.Label(info_frame, text='Try Again',
-                     fg='red', font=('', 12))
-
-        self.login_submit_btn = \
-            tk.Button(info_frame, text='Submit', command=self.check_login,
-            height=1, font=self.default_font, cursor='hand2')
-        self.login_submit_btn.pack()
-
-    def check_login(self):
-        """
-        validates the inputted credentials with the server
-        :return:
-        """
-        credentials_data = []
-
-        for entry_index, entry in enumerate(self.entries):
-            entry_text = entry.get()
-            entry.delete(0, tk.END)
-            if entry_index == 1:    # password entry
-                entry_text = hash_text(entry_text)
-
-            credentials_data.append(entry_text)
-        credentials_string = encapsulate_data(credentials_data)
-
-        self.client_socket.send(LoginEnum.SENDING_LOGIN_INFO.encode())
-        self.client_socket.send(credentials_string)
-
-        response = self.client_socket.recv(1024).decode()
-
-        if response == LoginEnum.INVALID_LOGIN_INFO:
-            self.labels[response].pack()
-        elif response == LoginEnum.VALID_LOGIN_INFO:
-
-            user_data = self.client_socket.recv(1024)
-            username, password, is_admin = decapsulate_data(user_data)
-            self.user = User(username.decode(), password.decode(), is_admin.decode())
-
-            self.login_submit_btn.config(state='disabled')
-            LoginTopLevel(login_window=self, logged_user=self.user)
-            self.withdraw()
-class LoginTopLevel(tk.Toplevel):
-    def __init__(self, login_window: LoginWindow, logged_user: User):
-        super().__init__()
-        self.parent = login_window
-        self.user = logged_user
-        self.client_socket = self.parent.client_socket
-
-        self.protocol('WM_DELETE_WINDOW', self.on_close)
-        self.default_font = '', 16
-
-        tk.Label(self, text='Enter TOTP Token',
-                 font=self.default_font).pack()
-        self.token_entry = tk.Entry(self, justify='center',
-                                    font=self.default_font, cursor='xterm')
-        self.token_entry.pack()
-        tk.Button(self, text='Submit',
-                  command=self.verify_totp_token,
-                  font=self.default_font, cursor='hand2').pack()
-    def on_close(self):
-        self.parent.login_submit_btn.config(state='normal')
-        self.parent.deiconify()
-        self.destroy()
-    def verify_totp_token(self):
-        token = self.token_entry.get()
-        self.token_entry.delete(0, tk.END)
-        if not token:
-            return
-        self.client_socket.send(LoginEnum.SENDING_TOTP_TOKEN.encode())
-        self.client_socket.send(token.encode())
-
-        response = self.client_socket.recv(1024).decode()
-        #print(response)
-        if response == LoginEnum.VALID_TOTP_TOKEN:
-            self.destroy()
-            self.parent.destroy()
-            MainWindow(client_socket=self.client_socket,
-                       logged_user=self.user).mainloop()
 
 
 class MainWindow(BaseWindow):
     def __init__(self,
-                 client_socket: socket.socket, logged_user: User):
+                 client_socket: socket.socket,
+                 is_skip_login=False, logged_user: User=None):
         super().__init__(title='Main Menu',
                          client_socket=client_socket)
         self.user = logged_user
+
+        self.login_menu = LoginMenu(self)
 
         self.main_menu = MainMenu(self,
                                    highlightbackground='blue',
@@ -164,7 +75,13 @@ class MainWindow(BaseWindow):
                                              highlightbackground='green',
                                              highlightthickness=2)
 
-        self.main_menu.pack()
+        # self.add_user_menu = AddUserMenu(self,
+        #                                  highlightbackground='purple',
+        #                                  highlightthickness=2)
+        if not is_skip_login:
+            self.login_menu.pack()
+        else:
+            self.main_menu.pack()
 
     def show_downloads_menu(self):
         self.main_menu.pack_forget()
@@ -196,22 +113,145 @@ class MainWindow(BaseWindow):
         time.sleep(0.2)
         self.client_socket.send(file_details_string)
 
-#test2
-class BaseFrame(tk.Frame):
+
+class LoginTopLevel(tk.Toplevel):
     def __init__(self,
-                 displayed_on: Union[BaseWindow, 'BaseFrame'],
-                 frame_args: Optional=None):
-        if not frame_args:
-            frame_args = {}
+                 displayed_on: MainWindow, logged_user: User):
+        super().__init__()
+        self.parent = displayed_on
+        self.user = logged_user
+        self.client_socket = self.parent.client_socket
 
-        super().__init__(master=displayed_on, **frame_args)
-        self.displayed_on = displayed_on
+        self.protocol('WM_DELETE_WINDOW', self.on_close)
+        self.default_font = '', 16
 
-        self.default_font = displayed_on.default_font
-        self.widgets: Dict['TkWidget', Dict[str, str]] = {}
-    def pack_widgets(self):
-        for widget, options in self.widgets.items():
-            widget.pack(**options)
+        tk.Label(self, text='Enter TOTP Token',
+                 font=self.default_font).pack()
+        self.token_entry = tk.Entry(self, justify='center',
+                                    font=self.default_font, cursor='xterm')
+        self.token_entry.pack()
+        tk.Button(self, text='Submit',
+                  command=self.verify_totp_token,
+                  font=self.default_font, cursor='hand2').pack()
+    def on_close(self):
+        self.parent.deiconify()
+        self.destroy()
+    def verify_totp_token(self):
+        token = self.token_entry.get()
+        self.token_entry.delete(0, tk.END)
+        if not token:
+            return
+        self.client_socket.send(LoginEnum.SENDING_TOTP_TOKEN.encode())
+        self.client_socket.send(token.encode())
+
+        response = self.client_socket.recv(1024).decode()
+        #print(response)
+        if response == LoginEnum.VALID_TOTP_TOKEN:
+            self.destroy()
+            self.parent.destroy()
+            MainWindow(client_socket=self.client_socket,
+                       logged_user=self.user,
+                       is_skip_login=True).mainloop()
+
+
+
+
+
+class LoginMenu(BaseFrame):
+    def __init__(self,
+                 displayed_on: MainWindow,
+                 **frame_args):
+        super().__init__(displayed_on=displayed_on,
+                         frame_args=frame_args)
+
+        self.info_form = BaseFrame(self,
+                                   frame_args={
+                                       'highlightbackground': 'magenta',
+                                       'highlightthickness': 2
+                                   })
+        self.try_again_label = \
+            tk.Label(self.info_form, text='Try Again',
+                     fg='red', font=('', 12))
+
+        self.entries = []
+
+        self.prepare_form()
+
+        self.widgets = {
+            tk.Label(text="TFS by Ido Kedem",
+                     font=('', 30)) : {},
+            self.info_form: {'pady': 60}
+        }
+        self.pack_widgets()
+        #self.prepare_window()
+
+    def prepare_form(self):
+        """
+        prepares the login form, with all its widgets
+        :return:
+        """
+        tk.Label(self.info_form, text='Login',
+                 font=('', 24)).pack()
+        username_frame = \
+            BaseFrame(self.info_form,
+                      frame_args={
+                          'width': '400',
+                          'height': '100',
+                          'pady': '15'})
+        self.entries.append(
+            username_frame.prepare_form_entry('Username'))
+
+        password_frame = \
+            BaseFrame(self.info_form,
+                      frame_args={
+                          'width': '400',
+                          'height': '100',
+                          'pady': '5'})
+        self.entries.append(
+            password_frame.prepare_form_entry('Password',
+                                              entry_show='*'))
+
+        self.submit_btn = tk.Button(
+            master=self.info_form,
+            text='Submit',
+            command=self.check_login,
+            height=1, font=self.default_font, cursor='hand2'
+        )
+        username_frame.pack()
+        password_frame.pack()
+        self.submit_btn.pack()
+    def check_login(self):
+        """
+        validates the inputted credentials with the server
+        :return:
+        """
+        credentials_data = []
+
+        for entry_index, entry in enumerate(self.entries):
+            entry_text = entry.get()
+            entry.delete(0, tk.END)
+            if entry_index == 1:    # password entry
+                entry_text = hash_text(entry_text)
+
+            credentials_data.append(entry_text)
+        credentials_string = encapsulate_data(credentials_data)
+
+        self.client_socket.send(LoginEnum.SENDING_LOGIN_INFO.encode())
+        self.client_socket.send(credentials_string)
+
+        response = self.client_socket.recv(1024).decode()
+
+        if response == LoginEnum.INVALID_LOGIN_INFO:
+            self.try_again_label.pack()
+
+        elif response == LoginEnum.VALID_LOGIN_INFO:
+            user_data = self.client_socket.recv(1024)
+            username, password, is_admin = decapsulate_data(user_data)
+            self.user = User(username.decode(), password.decode(), is_admin.decode())
+
+            LoginTopLevel(displayed_on=self.displayed_on,
+                          logged_user=self.user)
+            self.displayed_on.withdraw()
 
 class MainMenu(BaseFrame):
     def __init__(self,
@@ -226,7 +266,10 @@ class MainMenu(BaseFrame):
                       font=self.default_font): {},
             tk.Button(self, text='Download',
                       command=displayed_on.show_downloads_menu,
-                      font=self.default_font): {}
+                      font=self.default_font): {},
+            tk.Button(self, text='Add User',
+                      command=lambda: 0,
+                      font=self.default_font): {},
         }
         self.pack_widgets()
 
@@ -237,7 +280,6 @@ class DownloadsMenu(BaseFrame):
                  displayed_on: MainWindow,
                  **frame_args):
         super().__init__(displayed_on, frame_args)
-        self.client_socket = self.displayed_on.client_socket
 
         self.file_listbox_frame = \
             FileListboxFrame(displayed_on=self,
@@ -289,8 +331,6 @@ class FileListboxFrame(BaseFrame):
                  **frame_args):
 
         super().__init__(displayed_on, frame_args=frame_args)
-        self.client_socket = \
-            self.displayed_on.displayed_on.client_socket
 
         self.scrollbar = tk.Scrollbar(self)
         self.listbox = tk.Listbox(self,
@@ -322,3 +362,6 @@ class FileListboxFrame(BaseFrame):
             formatted_row = \
                 f'{ind + 1}. {filename.decode()} ({uploaded_by.decode()}, {upload_time.decode()})'
             self.listbox.insert(tk.END, formatted_row)
+
+
+
