@@ -1,6 +1,6 @@
 import pyotp, qrcode
 import os
-from handle_encryption import \
+from handle_string_manipulation import \
     encrypt, decrypt
 
 def generate_new_key():

@@ -21,3 +21,18 @@ def decrypt(cipher_key: bytes, shift=shift) -> bytes:
                      mixed_cipher_key[:midpoint]
 
     return decrypted_utf8
+
+
+def get_banned_words():
+    with open('banned_words.txt', 'rb') as f:
+        banned_words = f.read().split(b'\n')
+    return banned_words
+
+def censor_string_words(input_string):
+    censored_string = input_string
+    banned_words = get_banned_words()
+    for word in banned_words:
+        censored_string = censored_string.replace(word, b'*' * len(word))
+    return censored_string
+
+
