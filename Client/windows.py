@@ -195,6 +195,10 @@ class MainWindow(BaseWindow):
         self.client_socket.send(str(file_content_size).encode())
         time.sleep(0.2)
         self.client_socket.send(file_details_string)
+        file_status = self.client_socket.recv(1024)
+        if file_status == FileEnum.FILE_REJECTED.encode():
+            messagebox.showerror(title='Error',
+                                 message='FILE REJECTED')
 
 #test223
 class BaseFrame(tk.Frame):

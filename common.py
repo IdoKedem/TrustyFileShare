@@ -23,8 +23,7 @@ class FileEnum:
     REQUESTING_ALL_FILE_TITLES = 'Requesting File Titles!'
 
     SENDING_FILE_COUNT = 'Sending File Count!'
-    SENDING_FILE_SIZE = 'Sending File Size'
-
+    SENDING_FILE_SIZE = 'Sending File Size!'
 
     SUPPORTED_FILE_TYPES = [
         ('All Files', '*.txt;*.jpg;*.jpeg;*.mp4'),
@@ -32,6 +31,9 @@ class FileEnum:
         ('JPGs', '*.jpg;*.jpeg'),
         ('MP4s', '*.mp4')
     ]
+
+    FILE_REJECTED = 'File rejected'
+    FILE_ACCEPTED = 'File Accepted!'
 
 
 def hash_text(text):

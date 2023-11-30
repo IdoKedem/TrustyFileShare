@@ -13,6 +13,18 @@ def accept_client():
         clients[client] = ip
         Thread(target=receive_msg, args=(client,)).start()
 
+def get_banned_words():
+    with open('banned_words.txt', 'rb') as f:
+        banned_words = f.read().split(b'\n')
+    return banned_words
+
+def is_file_rejected(file_content) -> bool:
+    for word in get_banned_words():
+        if word in file_content:
+            print(word)
+            return True
+    return False
+
 def receive_msg(client):
     while True:
         try:
@@ -69,6 +81,13 @@ def receive_file_data(client):
     file_data = client.recv(1024 + file_size)
     file_name, username, file_content = \
         decapsulate_data(file_data)
+
+    if is_file_rejected(file_content):
+        client.send(FileEnum.FILE_REJECTED.encode())
+        print('bad')
+        return
+    client.send(FileEnum.FILE_ACCEPTED.encode())
+
     from handle_db import add_file_to_db
     add_file_to_db(file_name=file_name.decode(),
                    uploading_user=username.decode(),
