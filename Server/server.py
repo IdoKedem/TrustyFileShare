@@ -4,7 +4,9 @@ from common import SocketEnum, LoginEnum, FileEnum,\
     encapsulate_data, decapsulate_data
 from typing import Dict, List, Tuple
 from handle_2FA import is_token_valid
+import handle_string_manipulation
 import time
+
 
 def accept_client():
     while True:
@@ -18,12 +20,11 @@ def get_banned_words():
         banned_words = f.read().split(b'\n')
     return banned_words
 
-def is_file_rejected(file_content) -> bool:
+def is_file_rejected(file_content) -> bytes:
     for word in get_banned_words():
         if word in file_content:
-            print(word)
-            return True
-    return False
+            return word
+    return b''
 
 def receive_msg(client):
     while True:
@@ -82,12 +83,12 @@ def receive_file_data(client):
     file_name, username, file_content = \
         decapsulate_data(file_data)
 
-    if is_file_rejected(file_content):
+    censored_content = \
+        handle_string_manipulation.censor_string_words(file_content)
+    if censored_content == file_content:
+        client.send(FileEnum.FILE_ACCEPTED.encode())
+    else:
         client.send(FileEnum.FILE_REJECTED.encode())
-        print('bad')
-        return
-    client.send(FileEnum.FILE_ACCEPTED.encode())
-
     from handle_db import add_file_to_db
     add_file_to_db(file_name=file_name.decode(),
                    uploading_user=username.decode(),
