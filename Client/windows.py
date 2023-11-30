@@ -6,8 +6,7 @@ import tkinter as tk
 from tkinter import filedialog
 from typing import List, Dict, Optional, Union, Tuple
 import socket
-from pathlib import Path
-
+import time
 class BaseWindow(tk.Tk):
     def __init__(self, title: str, client_socket: socket.socket,
                  width: int=800, height: int=800):
@@ -96,7 +95,7 @@ class LoginWindow(BaseWindow):
         credentials_string = encapsulate_data(credentials_data)
 
         self.client_socket.send(LoginEnum.SENDING_LOGIN_INFO.encode())
-        self.client_socket.send(credentials_string.encode())
+        self.client_socket.send(credentials_string)
 
         response = self.client_socket.recv(1024).decode()
 
@@ -104,9 +103,9 @@ class LoginWindow(BaseWindow):
             self.labels[response].pack()
         elif response == LoginEnum.VALID_LOGIN_INFO:
 
-            user_data = self.client_socket.recv(1024).decode()
+            user_data = self.client_socket.recv(1024)
             username, password, is_admin = decapsulate_data(user_data)
-            self.user = User(username, password, is_admin)
+            self.user = User(username.decode(), password.decode(), is_admin.decode())
 
             self.login_submit_btn.config(state='disabled')
             LoginTopLevel(login_window=self, logged_user=self.user)
@@ -142,7 +141,7 @@ class LoginTopLevel(tk.Toplevel):
         self.client_socket.send(token.encode())
 
         response = self.client_socket.recv(1024).decode()
-        print(response)
+        #print(response)
         if response == LoginEnum.VALID_TOTP_TOKEN:
             self.destroy()
             self.parent.destroy()
@@ -179,7 +178,7 @@ class MainWindow(BaseWindow):
         file_path = filedialog.askopenfilename(
             title='Select a file to upload',
             filetypes=FileEnum.SUPPORTED_FILE_TYPES)
-        with open(file_path, 'r') as file:
+        with open(file_path, 'rb') as file:
             file_content = file.read()
         if not file_content:
             messagebox.showerror(title='Error',
@@ -187,11 +186,15 @@ class MainWindow(BaseWindow):
             return
         file_name = os.path.basename(file_path)
 
-        file_details_string = \
+        file_details_string: bytes = \
             encapsulate_data([file_name,
                               self.user.username, file_content])
+        file_content_size = len(file_content)
+
         self.client_socket.send(FileEnum.SENDING_FILE_DATA.encode())
-        self.client_socket.send(file_details_string.encode())
+        self.client_socket.send(str(file_content_size).encode())
+        time.sleep(0.2)
+        self.client_socket.send(file_details_string)
 
 #test223
 class BaseFrame(tk.Frame):
@@ -260,7 +263,7 @@ class DownloadsMenu(BaseFrame):
             tk.Button(self,
                       text='Download',
                       font=self.default_font,
-                      command=self.request_file) : {}
+                      command=self.request_file): {}
         }
         self.pack_widgets()
     def request_file(self):
@@ -269,14 +272,14 @@ class DownloadsMenu(BaseFrame):
         self.client_socket.send(str(requested_file_ind).encode())
 
         file_name = self.client_socket.recv(1024).decode()
-        print(file_name)
+        #print(file_name)
         file_size = int(self.client_socket.recv(1024).decode())
-        file_content = self.client_socket.recv(file_size).decode()
-        print(file_content)
+        file_content = self.client_socket.recv(file_size)
+        #print(file_content)
 
         if not os.path.exists('Downloads'):
             os.mkdir('Downloads')
-        with open(f'Downloads/{file_name}', 'w') as f:
+        with open(f'Downloads/{file_name}', 'wb') as f:
             f.write(file_content)
 
 
@@ -308,14 +311,14 @@ class FileListboxFrame(BaseFrame):
             FileEnum.REQUESTING_ALL_FILE_TITLES.encode())
         file_count = int(self.client_socket.recv(1024))
 
-        file_titles: List[List[str, str, str]] = []
+        file_titles: List[List[bytes, bytes, bytes]] = []
         for _ in range(file_count):
-            file_title: Tuple[str, str, str] = decapsulate_data(
-                self.client_socket.recv(1024).decode())
+            file_title: Tuple[bytes, ...] = decapsulate_data(
+                self.client_socket.recv(1024))
             file_titles.append([*file_title])
 
         for ind, row_data in enumerate(file_titles):
             filename, uploaded_by, upload_time = row_data
             formatted_row = \
-                f'{ind + 1}. {filename} ({uploaded_by}, {upload_time})'
+                f'{ind + 1}. {filename.decode()} ({uploaded_by.decode()}, {upload_time.decode()})'
             self.listbox.insert(tk.END, formatted_row)

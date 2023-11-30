@@ -4,6 +4,7 @@ from common import SocketEnum, LoginEnum, FileEnum,\
     encapsulate_data, decapsulate_data
 from typing import Dict, List, Tuple
 from handle_2FA import is_token_valid
+import time
 
 def accept_client():
     while True:
@@ -39,9 +40,9 @@ def receive_msg(client):
 def check_login(client):
     from handle_db import pull_user_value
 
-    login_info = client.recv(1024).decode()
+    login_info = client.recv(1024)
     username, password = decapsulate_data(login_info)
-    user_data = pull_user_value(username, password)
+    user_data = pull_user_value(username.decode(), password.decode())
     if user_data:
         client.send(LoginEnum.VALID_LOGIN_INFO.encode())
         user_data_list = []
@@ -51,7 +52,7 @@ def check_login(client):
             user_data_list.append(data)
 
         user_data_string = encapsulate_data(user_data_list)
-        client.send(user_data_string.encode())
+        client.send(user_data_string)
     else:
         client.send(LoginEnum.INVALID_LOGIN_INFO.encode())
 
@@ -63,12 +64,14 @@ def check_ttop_token(client):
         client.send(LoginEnum.INVALID_TOTP_TOKEN.encode())
 
 def receive_file_data(client):
-    file_data = client.recv(1024).decode()
+    file_size = int(client.recv(1024).decode())
+    #time.sleep(0.2)
+    file_data = client.recv(1024 + file_size)
     file_name, username, file_content = \
         decapsulate_data(file_data)
     from handle_db import add_file_to_db
-    add_file_to_db(file_name=file_name,
-                   uploading_user=username,
+    add_file_to_db(file_name=file_name.decode(),
+                   uploading_user=username.decode(),
                    file_content=file_content)
 
 def send_all_files_titles(client):
@@ -77,26 +80,29 @@ def send_all_files_titles(client):
         = pull_files(fields=['filename',
                              'uploaded_by',
                              'upload_time'])
-    print(all_file_titles)
+    #print(all_file_titles)
     file_count = str(len(all_file_titles))
     client.send(file_count.encode())
     for file_title in all_file_titles:
-        client.send(encapsulate_data(file_title).encode())
+        client.send(encapsulate_data(file_title))
 
 def send_file_data(client):
     from handle_db import pull_files
     file_ind: str = client.recv(1024).decode()
-    file_name, file_content = \
+
+    file_name, hexa_file_content = \
         pull_files(fields=['filename', 'content'],
                    where_dict={'ID': file_ind})[0]
     client.send(file_name.encode())
 
-    print(file_name, file_content)
+    bytes_file_content = bytes.fromhex(hexa_file_content)
+    print(file_name, bytes_file_content)
 
-    bytes_file_size: int = len(file_content.encode())
+    bytes_file_size: int = len(bytes_file_content)
 
     client.send(str(bytes_file_size).encode())
-    client.send(file_content.encode())
+    time.sleep(0.2)   # prevent client recieveing two message with one recv()
+    client.send(bytes_file_content)
 
 
 if __name__ == '__main__':
