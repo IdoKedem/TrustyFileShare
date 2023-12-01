@@ -1,7 +1,7 @@
 import socket
 from common import SocketEnum
 import common
-from windows import LoginWindow, MainWindow
+from windows import LoginMenu, MainWindow
 
 
 def connect_to_server() -> socket.socket:

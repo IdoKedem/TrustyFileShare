@@ -128,7 +128,7 @@ def send_file_data(client):
     bytes_file_size: int = len(bytes_file_content)
 
     client.send(str(bytes_file_size).encode())
-    time.sleep(0.2)   # prevent client recieveing two message with one recv()
+    time.sleep(0.2)   # prevent client from receiving two message with one recv()
     client.send(bytes_file_content)
 
 
