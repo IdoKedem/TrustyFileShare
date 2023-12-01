@@ -240,14 +240,19 @@ class LoginMenu(BaseFrame):
         self.client_socket.send(LoginEnum.SENDING_LOGIN_INFO.encode())
         self.client_socket.send(credentials_string)
 
-        super().__init__(master=displayed_on, **frame_args)
-        self.displayed_on = displayed_on
+        response = self.client_socket.recv(1024).decode()
 
-        self.default_font = displayed_on.default_font
-        self.widgets: Dict['TkWidget', Dict[str, str]] = {}
-    def pack_widgets(self):
-        for widget, options in self.widgets.items():
-            widget.pack(**options)
+        if response == LoginEnum.INVALID_LOGIN_INFO:
+            self.try_again_label.pack()
+
+        elif response == LoginEnum.VALID_LOGIN_INFO:
+            user_data = self.client_socket.recv(1024)
+            username, password, is_admin = decapsulate_data(user_data)
+            self.user = User(username.decode(), password.decode(), is_admin.decode())
+
+            LoginTopLevel(displayed_on=self.displayed_on,
+                          logged_user=self.user)
+            self.displayed_on.withdraw()
 
 class MainMenu(BaseFrame):
     def __init__(self,
@@ -262,7 +267,10 @@ class MainMenu(BaseFrame):
                       font=self.default_font): {},
             tk.Button(self, text='Download',
                       command=displayed_on.show_downloads_menu,
-                      font=self.default_font): {}
+                      font=self.default_font): {},
+            tk.Button(self, text='Add User',
+                      command=lambda: 0,
+                      font=self.default_font): {},
         }
         self.pack_widgets()
 
@@ -313,9 +321,9 @@ class DownloadsMenu(BaseFrame):
         file_content = self.client_socket.recv(file_size)
         #print(file_content)
 
-        if not os.path.exists('Downloads'):
-            os.mkdir('Downloads')
-        with open(f'Downloads/{file_name}', 'wb') as f:
+        if not os.path.exists('Client/Downloads'):
+            os.mkdir('Client/Downloads')
+        with open(f'Client/Downloads/{file_name}', 'wb') as f:
             f.write(file_content)
 
 
