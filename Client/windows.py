@@ -281,7 +281,7 @@ class DownloadsMenu(BaseFrame):
         file_content = self.client_socket.recv(file_size)
         #print(file_content)
 
-        if not os.path.exists('Downloads'):
+        if not os.path.exists('Client/Downloads'):
             os.mkdir('Downloads')
         with open(f'Client/Downloads/{file_name}', 'wb') as f:
             f.write(file_content)
