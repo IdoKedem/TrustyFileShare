@@ -89,10 +89,11 @@ def receive_file_data(client):
         client.send(FileEnum.FILE_ACCEPTED.encode())
     else:
         client.send(FileEnum.FILE_REJECTED.encode())
+
     from handle_db import add_file_to_db
     add_file_to_db(file_name=file_name.decode(),
                    uploading_user=username.decode(),
-                   file_content=file_content)
+                   file_content=censored_content)
 
 def send_all_files_titles(client):
     from handle_db import pull_files

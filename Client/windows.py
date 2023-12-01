@@ -197,10 +197,10 @@ class MainWindow(BaseWindow):
         self.client_socket.send(file_details_string)
         file_status = self.client_socket.recv(1024)
         if file_status == FileEnum.FILE_REJECTED.encode():
-            messagebox.showerror(title='Error',
-                                 message='FILE REJECTED')
+            messagebox.showerror(title='BANNED WORDS DETECTED',
+                                 message='SYSTEM CENSORED BANNED WORDS')
 
-#test223
+
 class BaseFrame(tk.Frame):
     def __init__(self,
                  displayed_on: Union[BaseWindow, 'BaseFrame'],
