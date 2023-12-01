@@ -3,7 +3,7 @@ from typing import List, Any, Tuple, Union
 from enum import Enum
 
 class SocketEnum:
-    SERVER_IP = '127.0.0.1'
+    SERVER_IP = '192.168.7.24'
     PORT = 6666
     SPLIT_TEXT = '!@#$%^&*()'
 
@@ -30,6 +30,10 @@ class FileEnum:
         ('Text Files', '*.txt'),
         ('JPGs', '*.jpg;*.jpeg'),
         ('MP4s', '*.mp4')
+    ]
+
+    FILE_EXTENSION_TO_CENSOR = [
+        '.txt'
     ]
 
     FILE_REJECTED = 'File rejected'

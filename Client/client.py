@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     # LoginWindow(title='Login',
     #            client_socket=client_socket).mainloop()
-
+    #
     MainWindow(client_socket=client_socket,
               logged_user=common.users[1]).mainloop()
 

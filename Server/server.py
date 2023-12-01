@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 from handle_2FA import is_token_valid
 import handle_string_manipulation
 import time
-
+import os
 
 def accept_client():
     while True:
@@ -83,8 +83,15 @@ def receive_file_data(client):
     file_name, username, file_content = \
         decapsulate_data(file_data)
 
-    censored_content = \
-        handle_string_manipulation.censor_string_words(file_content)
+    _, file_extension = os.path.splitext(file_name)
+    print(file_extension)
+
+    if file_extension in FileEnum.FILE_EXTENSION_TO_CENSOR:
+        censored_content = \
+            handle_string_manipulation.censor_string_words(file_content)
+    else:
+        censored_content = file_content
+
     if censored_content == file_content:
         client.send(FileEnum.FILE_ACCEPTED.encode())
     else:
@@ -117,7 +124,6 @@ def send_file_data(client):
     client.send(file_name.encode())
 
     bytes_file_content = bytes.fromhex(hexa_file_content)
-    print(file_name, bytes_file_content)
 
     bytes_file_size: int = len(bytes_file_content)
 

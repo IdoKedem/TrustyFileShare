@@ -283,7 +283,7 @@ class DownloadsMenu(BaseFrame):
 
         if not os.path.exists('Downloads'):
             os.mkdir('Downloads')
-        with open(f'Downloads/{file_name}', 'wb') as f:
+        with open(f'Client/Downloads/{file_name}', 'wb') as f:
             f.write(file_content)
 
 

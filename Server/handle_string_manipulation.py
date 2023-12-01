@@ -2,14 +2,14 @@
 shift = 3
 def encrypt(plain_key: bytes, shift=shift) -> bytes:
     midpoint = len(plain_key) // 2
-    mixed_plain_key = plain_key[midpoint:] + \
+    mixed_plain = plain_key[midpoint:] + \
                 plain_key[:midpoint]
 
-    encrypted_key = b''
-    for char in mixed_plain_key:
-        encrypted_key += chr(char + shift).encode()
+    encrypted = b''
+    for char in mixed_plain:
+        encrypted += chr(char + shift).encode()
 
-    return encrypted_key
+    return encrypted
 
 def decrypt(cipher_key: bytes, shift=shift) -> bytes:
     mixed_cipher_key = b''
