@@ -33,7 +33,7 @@ class FileEnum:
     ]
 
     FILE_EXTENSION_TO_CENSOR = [
-        '.txt'
+        b'.txt'
     ]
 
     FILE_REJECTED = 'File rejected'
