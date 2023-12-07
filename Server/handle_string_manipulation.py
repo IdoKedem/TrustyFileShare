@@ -1,4 +1,8 @@
+import os
 
+print(os.getcwd())
+cur_dir = os.path.join(os.getcwd(),
+                       r'TrustyFileShare\Server')
 shift = 3
 def encrypt(plain_key: bytes, shift=shift) -> bytes:
     midpoint = len(plain_key) // 2
@@ -24,7 +28,8 @@ def decrypt(cipher_key: bytes, shift=shift) -> bytes:
 
 
 def get_banned_words():
-    with open('Server/banned_words.txt', 'rb') as f:
+    print(os.getcwd())
+    with open(cur_dir + r'\banned_words.txt', 'rb') as f:
         banned_words = f.read().replace(b'\r' ,b'').split(b'\n')
     return banned_words
 

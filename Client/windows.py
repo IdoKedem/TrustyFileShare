@@ -8,6 +8,8 @@ from typing import List, Dict, Optional, Union, Tuple
 import socket
 import time
 
+cur_dir = os.path.join(os.getcwd(),
+                       r'TrustyFileShare\Client')
 
 
 class BaseWindow(tk.Tk):
@@ -291,6 +293,8 @@ class DownloadsMenu(BaseFrame):
                  displayed_on: MainWindow,
                  **frame_args):
         super().__init__(displayed_on, frame_args)
+        print('1221212')
+        print(self.client_socket)
 
         self.file_listbox_frame = \
             FileListboxFrame(displayed_on=self,
@@ -330,9 +334,9 @@ class DownloadsMenu(BaseFrame):
         file_content = self.client_socket.recv(file_size)
         #print(file_content)
 
-        if not os.path.exists('Client/Downloads'):
-            os.mkdir('Client/Downloads')
-        with open(f'Client/Downloads/{file_name}', 'wb') as f:
+        if not os.path.exists(cur_dir + r'\Downloads'):
+            os.mkdir(cur_dir + r'\Downloads')
+        with open(cur_dir + rf'\Downloads\{file_name}', 'wb') as f:
             f.write(file_content)
 
 
@@ -369,6 +373,8 @@ class FileListboxFrame(BaseFrame):
             file_title: Tuple[bytes, ...] = decapsulate_data(
                 self.client_socket.recv(1024))
             file_titles.append([*file_title])
+            self.client_socket.send(b'ready')
+        print(file_titles)
 
         for ind, row_data in enumerate(file_titles):
             filename, uploaded_by, upload_time = row_data

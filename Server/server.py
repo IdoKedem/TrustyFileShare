@@ -113,6 +113,8 @@ def send_all_files_titles(client):
     client.send(file_count.encode())
     for file_title in all_file_titles:
         client.send(encapsulate_data(file_title))
+        client.recv(1024)
+    print('domestic')
 
 def send_file_data(client):
     from handle_db import pull_files

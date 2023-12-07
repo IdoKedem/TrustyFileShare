@@ -3,7 +3,7 @@ from typing import List, Any, Tuple, Union
 from enum import Enum
 
 class SocketEnum:
-    SERVER_IP = '192.168.7.24'
+    SERVER_IP = '127.0.0.1'
     PORT = 6666
     SPLIT_TEXT = '!@#$%^&*()'
 
