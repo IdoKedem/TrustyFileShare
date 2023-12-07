@@ -7,6 +7,9 @@ from tkinter import filedialog
 from typing import List, Dict, Optional, Union, Tuple
 import socket
 import time
+
+
+
 class BaseWindow(tk.Tk):
     def __init__(self, title: str, client_socket: socket.socket,
                  width: int=800, height: int=800):
@@ -71,7 +74,9 @@ class MainWindow(BaseWindow):
         self.downloads_menu = DownloadsMenu(self,
                                              highlightbackground='green',
                                              highlightthickness=2)
-
+        self.create_user_menu = CreateUserMenu(self,
+                                               highlightbackground='blue',
+                                               highlightthickness=2)
         # self.add_user_menu = AddUserMenu(self,
         #                                  highlightbackground='purple',
         #                                  highlightthickness=2)
@@ -87,6 +92,9 @@ class MainWindow(BaseWindow):
     def show_main_menu(self):
         self.downloads_menu.pack_forget()
         self.main_menu.pack()
+    def show_create_user_menu(self):
+        self.main_menu.pack_forget()
+        self.create_user_menu.pack()
 
     def upload_file_to_db(self):
         file_path = filedialog.askopenfilename(
@@ -109,6 +117,7 @@ class MainWindow(BaseWindow):
         self.client_socket.send(str(file_content_size).encode())
         time.sleep(0.2)
         self.client_socket.send(file_details_string)
+
         file_status = self.client_socket.recv(1024)
         if file_status == FileEnum.FILE_REJECTED.encode():
             messagebox.showerror(title='BANNED WORDS DETECTED',
@@ -221,6 +230,7 @@ class LoginMenu(BaseFrame):
         username_frame.pack()
         password_frame.pack()
         self.submit_btn.pack()
+
     def check_login(self):
         """
         validates the inputted credentials with the server
@@ -268,8 +278,8 @@ class MainMenu(BaseFrame):
             tk.Button(self, text='Download',
                       command=displayed_on.show_downloads_menu,
                       font=self.default_font): {},
-            tk.Button(self, text='Add User',
-                      command=lambda: 0,
+            tk.Button(self, text='Create User',
+                      command=displayed_on.show_create_user_menu,
                       font=self.default_font): {},
         }
         self.pack_widgets()
@@ -281,7 +291,6 @@ class DownloadsMenu(BaseFrame):
                  displayed_on: MainWindow,
                  **frame_args):
         super().__init__(displayed_on, frame_args)
-        self.client_socket = self.displayed_on.client_socket
 
         self.file_listbox_frame = \
             FileListboxFrame(displayed_on=self,
@@ -366,3 +375,60 @@ class FileListboxFrame(BaseFrame):
             formatted_row = \
                 f'{ind + 1}. {filename.decode()} ({uploaded_by.decode()}, {upload_time.decode()})'
             self.listbox.insert(tk.END, formatted_row)
+
+
+class CreateUserMenu(BaseFrame):
+    def __init__(self,
+                 displayed_on: MainWindow,
+                 **frame_args):
+        super().__init__(displayed_on, frame_args)
+        self.entries = []
+        self.info_form = BaseFrame(self,
+                                   frame_args={
+                                       'highlightbackground': 'green',
+                                       'highlightthickness': 2
+                                   })
+        self.prepare_form()
+        self.widgets = {
+            tk.Label(text='ABCDEF'): {},
+            self.info_form: {}
+        }
+        self.pack_widgets()
+
+    def prepare_form(self):
+        """
+        prepares the login form, with all its widgets
+        :return:
+        """
+        tk.Label(self.info_form, text='Login',
+                 font=('', 24)).pack()
+        username_frame = \
+            BaseFrame(self.info_form,
+                      frame_args={
+                          'width': '400',
+                          'height': '100',
+                          'pady': '15'})
+        self.entries.append(
+            username_frame.prepare_form_entry('Username'))
+
+        password_frame = \
+            BaseFrame(self.info_form,
+                      frame_args={
+                          'width': '400',
+                          'height': '100',
+                          'pady': '5'})
+        self.entries.append(
+            password_frame.prepare_form_entry('Password',
+                                              entry_show='*'))
+
+        self.submit_btn = tk.Button(
+            master=self.info_form,
+            text='Submit',
+            command=lambda: 0,
+            height=1, font=self.default_font, cursor='hand2'
+        )
+        username_frame.pack()
+        password_frame.pack()
+        self.submit_btn.pack()
+
+
