@@ -4,7 +4,7 @@ from common import LoginEnum, hash_text, User, FileEnum, \
     encapsulate_data, decapsulate_data
 import tkinter as tk
 from tkinter import filedialog
-from typing import List, Dict, Optional, Union, Tuple
+from typing import List, Dict, Optional, Union, Tuple, Any
 import socket
 import time
 
@@ -38,6 +38,7 @@ class BaseFrame(tk.Frame):
         self.default_font = displayed_on.default_font
         self.widgets: Dict['TkWidget', Dict[str, str]] = {}
         self.client_socket = displayed_on.client_socket
+
     def pack_widgets(self):
         for widget, options in self.widgets.items():
             widget.pack(**options)
@@ -56,6 +57,71 @@ class BaseFrame(tk.Frame):
                          font=self.default_font, cursor='xterm')
         entry.pack()
         return entry
+
+
+
+
+class BaseForm(BaseFrame):
+    def __init__(self,
+                 displayed_on: Union[BaseWindow, BaseFrame, 'BaseForm'],
+                 form_title: str,
+                 entries_dict: Dict[str, Dict[str, Any]],
+                 frame_args: Optional=None):
+
+        self.form_title = form_title
+        self.entries_dict = entries_dict
+        super().__init__(displayed_on, frame_args)
+
+        self.frames, self.entries = [], []
+        self.prepare_form()
+
+    def prepare_form(self):
+        """
+        prepares the login form, with all its widgets
+        :return:
+        """
+        tk.Label(self.displayed_on, text=self.form_title,
+                 font=('', 24)).pack()
+
+        for entry_name, entry_data in self.entries_dict.items():
+            cur_frame = \
+                BaseFrame(self.displayed_on,
+                          entry_data['frame_args'])
+            self.frames.append(cur_frame)
+            self.entries.append(cur_frame.prepare_form_entry(
+                                          entry_name, entry_data['show']))
+
+        # username_frame = \
+        #     BaseFrame(self.displayed_on,
+        #               frame_args={
+        #                   'width': '400',
+        #                   'height': '100',
+        #                   'pady': '15'})
+        # self.entries.append(
+        #     username_frame.prepare_form_entry('Username'))
+        #
+        # password_frame = \
+        #     BaseFrame(self.info_form,
+        #               frame_args={
+        #                   'width': '400',
+        #                   'height': '100',
+        #                   'pady': '5'})
+        # self.entries.append(
+        #     password_frame.prepare_form_entry('Password',
+        #                                       entry_show='*'))
+        #
+        # self.submit_btn = tk.Button(
+        #     master=self.displayed_on,
+        #     text='Submit',
+        #     command=self.check_login,
+        #     height=1, font=self.default_font, cursor='hand2'
+        # )
+        for frame in self.frames:
+            frame.pack()
+        # username_frame.pack()
+        # password_frame.pack()
+        # self.submit_btn.pack()
+
 
 
 
@@ -175,53 +241,31 @@ class LoginMenu(BaseFrame):
                  **frame_args):
         super().__init__(displayed_on=displayed_on,
                          frame_args=frame_args)
+        #
+        # self.info_form = BaseFrame(self,
+        #                            frame_args={
+        #                                'highlightbackground': 'magenta',
+        #                                'highlightthickness': 2
+        #                            })
+        entries_dict = {
+            'Username': {'frame_args': {'width': '400',
+                                        'height': '100',
+                                        'pady': '15'},
+                         'show': None},
+            'Password': {'frame_args': {'width': '400',
+                                        'height': '100',
+                                        'pady': '5'},
+                         'show': '*'}
+        }
 
-        self.info_form = BaseFrame(self,
-                                   frame_args={
-                                       'highlightbackground': 'magenta',
-                                       'highlightthickness': 2
-                                   })
+        self.info_form = \
+            BaseForm(self,
+                     form_title='Login',
+                     entries_dict=entries_dict)
+
         self.try_again_label = \
             tk.Label(self.info_form, text='Try Again',
                      fg='red', font=('', 12))
-
-        self.entries = []
-
-        self.prepare_form()
-
-        self.widgets = {
-            tk.Label(text="TFS by Ido Kedem",
-                     font=('', 30)) : {},
-            self.info_form: {'pady': 60}
-        }
-        self.pack_widgets()
-        #self.prepare_window()
-
-    def prepare_form(self):
-        """
-        prepares the login form, with all its widgets
-        :return:
-        """
-        tk.Label(self.info_form, text='Login',
-                 font=('', 24)).pack()
-        username_frame = \
-            BaseFrame(self.info_form,
-                      frame_args={
-                          'width': '400',
-                          'height': '100',
-                          'pady': '15'})
-        self.entries.append(
-            username_frame.prepare_form_entry('Username'))
-
-        password_frame = \
-            BaseFrame(self.info_form,
-                      frame_args={
-                          'width': '400',
-                          'height': '100',
-                          'pady': '5'})
-        self.entries.append(
-            password_frame.prepare_form_entry('Password',
-                                              entry_show='*'))
 
         self.submit_btn = tk.Button(
             master=self.info_form,
@@ -229,9 +273,56 @@ class LoginMenu(BaseFrame):
             command=self.check_login,
             height=1, font=self.default_font, cursor='hand2'
         )
-        username_frame.pack()
-        password_frame.pack()
         self.submit_btn.pack()
+
+        #self.entries = []
+
+        #self.prepare_form()
+
+        self.widgets = {
+            tk.Label(text="TFS by Ido Kedem",
+                     font=('', 30)): {},
+            self.info_form: {'pady': 60}
+        }
+        self.pack_widgets()
+        #self.prepare_window()
+
+    # def prepare_form(self):
+    #     """
+    #     prepares the login form, with all its widgets
+    #     :return:
+    #     """
+    #     tk.Label(self.info_form, text='Login',
+    #              font=('', 24)).pack()
+    #     username_frame = \
+    #         BaseFrame(self.info_form,
+    #                   frame_args={
+    #                       'width': '400',
+    #                       'height': '100',
+    #                       'pady': '15'})
+    #     self.entries.append(
+    #         username_frame.prepare_form_entry('Username'))
+    #
+    #     password_frame = \
+    #         BaseFrame(self.info_form,
+    #                   frame_args={
+    #                       'width': '400',
+    #                       'height': '100',
+    #                       'pady': '5'})
+    #     self.entries.append(
+    #         password_frame.prepare_form_entry('Password',
+    #                                           entry_show='*'))
+    #
+    #     self.submit_btn = tk.Button(
+    #         master=self.info_form,
+    #         text='Submit',
+    #         command=self.check_login,
+    #         height=1, font=self.default_font, cursor='hand2'
+    #     )
+    #     username_frame.pack()
+    #     password_frame.pack()
+    #     self.submit_btn.pack()
+
 
     def check_login(self):
         """
@@ -240,7 +331,7 @@ class LoginMenu(BaseFrame):
         """
         credentials_data = []
 
-        for entry_index, entry in enumerate(self.entries):
+        for entry_index, entry in enumerate(self.info_form.entries):
             entry_text = entry.get()
             entry.delete(0, tk.END)
             if entry_index == 1:    # password entry
@@ -396,7 +487,6 @@ class CreateUserMenu(BaseFrame):
                                    })
         self.prepare_form()
         self.widgets = {
-            tk.Label(text='ABCDEF'): {},
             self.info_form: {}
         }
         self.pack_widgets()

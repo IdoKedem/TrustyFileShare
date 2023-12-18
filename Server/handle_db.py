@@ -28,14 +28,12 @@ class DataBase:
 
 def run(command: str,
         insertion_values: Optional[Tuple]=tuple(),
-        db_instance=None,
-        is_close_connection: bool=True):
+        db_instance=None):
     """
     this function executes the given query
     :param command: the query to execute.
     :param insertion_values: values to insert
     :param db_instance: the instance of the db
-    :param is_close_connection:
     :return:
     """
     if not db_instance:
@@ -43,8 +41,7 @@ def run(command: str,
     db_instance.cursor.execute(command, insertion_values)
     db_instance.connection.commit()
 def pull_user_value(username, password,
-                    db_instance: Optional[DataBase]=None,
-                    is_close_connection: bool=True) -> Optional[Tuple[int, str, str]]:
+                    db_instance: Optional[DataBase]=None) -> Optional[Tuple[int, str, str]]:
     """
     return a database entry corresponding to the info given
     :param db_instance: instance of the database
@@ -62,7 +59,7 @@ def pull_user_value(username, password,
     return user_data
 
 
-def initialize_db(db_instance=None, is_close_connection=True):
+def initialize_db(db_instance=None):
     """
     this function initialize the database at the start of the script
     with a table of users, and a table of uploaded files
@@ -71,13 +68,12 @@ def initialize_db(db_instance=None, is_close_connection=True):
     """
     run(command="""CREATE TABLE IF NOT EXISTS users(
         ID INTEGER PRIMARY KEY, username TEXT UNIQUE, 
-        password TEXT, isadmin BOOLEAN)""", db_instance=db_instance,
-        is_close_connection=is_close_connection)
+        password TEXT, isadmin BOOLEAN)""", db_instance=db_instance)
 
     for user in common.users:
         run(command=f"""INSERT OR IGNORE INTO users (username, password, isadmin) 
             VALUES(?, ?, ?)""", insertion_values=(user.username, user.password, user.is_admin),
-            db_instance=db_instance, is_close_connection=is_close_connection)
+            db_instance=db_instance)
 
     run(command="""CREATE TABLE IF NOT EXISTS files(
                 ID INTEGER PRIMARY KEY,
@@ -85,7 +81,7 @@ def initialize_db(db_instance=None, is_close_connection=True):
                 uploaded_by TEXT,
                 upload_time TEXT,
                 content TEXT)""",
-        db_instance=db_instance, is_close_connection=is_close_connection)
+        db_instance=db_instance)
 
 
 def add_file_to_db(file_name: str,
