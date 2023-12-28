@@ -480,12 +480,37 @@ class CreateUserMenu(BaseFrame):
                  **frame_args):
         super().__init__(displayed_on, frame_args)
         self.entries = []
-        self.info_form = BaseFrame(self,
-                                   frame_args={
-                                       'highlightbackground': 'green',
-                                       'highlightthickness': 2
-                                   })
-        self.prepare_form()
+        # self.info_form = BaseFrame(self,
+        #                            frame_args={
+        #                                'highlightbackground': 'green',
+        #                                'highlightthickness': 2
+        #                            })
+        #self.prepare_form()
+
+        f_args = \
+            {
+               'highlightbackground': 'pink',
+               'highlightthickness': 2
+               }
+        entries_dict = {
+            'Username': {'show': None,
+                         'frame_args': {'width': '400',
+                                        'height': '100',
+                                        'pady': '15'}},
+            'Password': {'show': '*',
+                         'frame_args': {'width': '400',
+                                        'height': '100',
+                                        'pady': '5'}}
+        }
+        self.info_form = BaseForm(self, form_title='Create New User',
+                                  entries_dict=entries_dict)
+        tk.Button(
+            master=self.info_form,
+            text='Submit',
+            command=lambda: 0,
+            height=1, font=self.default_font, cursor='hand2'
+        ).pack()
+
         self.widgets = {
             self.info_form: {}
         }
@@ -496,7 +521,7 @@ class CreateUserMenu(BaseFrame):
         prepares the login form, with all its widgets
         :return:
         """
-        tk.Label(self.info_form, text='Login',
+        tk.Label(self.info_form, text='Create New User',
                  font=('', 24)).pack()
         username_frame = \
             BaseFrame(self.info_form,
