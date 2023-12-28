@@ -80,48 +80,18 @@ class BaseForm(BaseFrame):
         prepares the login form, with all its widgets
         :return:
         """
-        tk.Label(self.displayed_on, text=self.form_title,
+        tk.Label(self, text=self.form_title,
                  font=('', 24)).pack()
 
         for entry_name, entry_data in self.entries_dict.items():
             cur_frame = \
-                BaseFrame(self.displayed_on,
+                BaseFrame(self,
                           entry_data['frame_args'])
             self.frames.append(cur_frame)
             self.entries.append(cur_frame.prepare_form_entry(
                                           entry_name, entry_data['show']))
-
-        # username_frame = \
-        #     BaseFrame(self.displayed_on,
-        #               frame_args={
-        #                   'width': '400',
-        #                   'height': '100',
-        #                   'pady': '15'})
-        # self.entries.append(
-        #     username_frame.prepare_form_entry('Username'))
-        #
-        # password_frame = \
-        #     BaseFrame(self.info_form,
-        #               frame_args={
-        #                   'width': '400',
-        #                   'height': '100',
-        #                   'pady': '5'})
-        # self.entries.append(
-        #     password_frame.prepare_form_entry('Password',
-        #                                       entry_show='*'))
-        #
-        # self.submit_btn = tk.Button(
-        #     master=self.displayed_on,
-        #     text='Submit',
-        #     command=self.check_login,
-        #     height=1, font=self.default_font, cursor='hand2'
-        # )
         for frame in self.frames:
             frame.pack()
-        # username_frame.pack()
-        # password_frame.pack()
-        # self.submit_btn.pack()
-
 
 
 
@@ -145,9 +115,6 @@ class MainWindow(BaseWindow):
         self.create_user_menu = CreateUserMenu(self,
                                                highlightbackground='blue',
                                                highlightthickness=2)
-        # self.add_user_menu = AddUserMenu(self,
-        #                                  highlightbackground='purple',
-        #                                  highlightthickness=2)
         if not is_skip_login:
             self.login_menu.pack()
         else:
@@ -241,12 +208,12 @@ class LoginMenu(BaseFrame):
                  **frame_args):
         super().__init__(displayed_on=displayed_on,
                          frame_args=frame_args)
-        #
-        # self.info_form = BaseFrame(self,
-        #                            frame_args={
-        #                                'highlightbackground': 'magenta',
-        #                                'highlightthickness': 2
-        #                            })
+        f_args = \
+            {
+               'highlightbackground': 'green',
+               'highlightthickness': 2
+               }
+
         entries_dict = {
             'Username': {'frame_args': {'width': '400',
                                         'height': '100',
@@ -257,11 +224,11 @@ class LoginMenu(BaseFrame):
                                         'pady': '5'},
                          'show': '*'}
         }
-
         self.info_form = \
             BaseForm(self,
                      form_title='Login',
-                     entries_dict=entries_dict)
+                     entries_dict=entries_dict,
+                     frame_args=f_args)
 
         self.try_again_label = \
             tk.Label(self.info_form, text='Try Again',
@@ -384,8 +351,6 @@ class DownloadsMenu(BaseFrame):
                  displayed_on: MainWindow,
                  **frame_args):
         super().__init__(displayed_on, frame_args)
-        print('1221212')
-        print(self.client_socket)
 
         self.file_listbox_frame = \
             FileListboxFrame(displayed_on=self,
@@ -480,18 +445,13 @@ class CreateUserMenu(BaseFrame):
                  **frame_args):
         super().__init__(displayed_on, frame_args)
         self.entries = []
-        # self.info_form = BaseFrame(self,
-        #                            frame_args={
-        #                                'highlightbackground': 'green',
-        #                                'highlightthickness': 2
-        #                            })
-        #self.prepare_form()
 
         f_args = \
             {
                'highlightbackground': 'pink',
                'highlightthickness': 2
                }
+
         entries_dict = {
             'Username': {'show': None,
                          'frame_args': {'width': '400',
@@ -503,11 +463,12 @@ class CreateUserMenu(BaseFrame):
                                         'pady': '5'}}
         }
         self.info_form = BaseForm(self, form_title='Create New User',
-                                  entries_dict=entries_dict)
+                                  entries_dict=entries_dict,
+                                  frame_args=f_args)
         tk.Button(
             master=self.info_form,
             text='Submit',
-            command=lambda: 0,
+            command=lambda: print(2),
             height=1, font=self.default_font, cursor='hand2'
         ).pack()
 

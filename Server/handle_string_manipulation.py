@@ -27,7 +27,6 @@ def decrypt(cipher_key: bytes, shift=shift) -> bytes:
 
 
 def get_banned_words():
-    print(os.getcwd())
     with open(cur_dir + r'\banned_words.txt', 'rb') as f:
         banned_words = f.read().replace(b'\r' ,b'').split(b'\n')
     return banned_words
@@ -37,7 +36,6 @@ def censor_string_words(input_string):
     banned_words = get_banned_words()
 
     for word in banned_words:
-        print(word)
         censored_string = censored_string.replace(word, b'*' * len(word))
     return censored_string
 

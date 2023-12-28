@@ -84,7 +84,6 @@ def receive_file_data(client):
         decapsulate_data(file_data)
 
     _, file_extension = os.path.splitext(file_name)
-    print(file_extension)
 
     if file_extension in FileEnum.FILE_EXTENSION_TO_CENSOR:
         censored_content = \
@@ -108,13 +107,12 @@ def send_all_files_titles(client):
         = pull_files(fields=['filename',
                              'uploaded_by',
                              'upload_time'])
-    #print(all_file_titles)
+
     file_count = str(len(all_file_titles))
     client.send(file_count.encode())
     for file_title in all_file_titles:
         client.send(encapsulate_data(file_title))
         client.recv(1024)
-    print('domestic')
 
 def send_file_data(client):
     from handle_db import pull_files
