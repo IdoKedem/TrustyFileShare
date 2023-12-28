@@ -94,7 +94,6 @@ class BaseForm(BaseFrame):
             frame.pack()
 
 
-
 class MainWindow(BaseWindow):
     def __init__(self,
                  client_socket: socket.socket,
