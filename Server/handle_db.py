@@ -83,6 +83,11 @@ def initialize_db(db_instance=None):
                 content TEXT)""",
         db_instance=db_instance)
 
+    run(command="""CREATE TABLE IF NOT EXISTS TFA(
+                    key TEXT,
+                    QR_code TEXT)""",
+        db_instance=db_instance)
+
 
 def add_file_to_db(file_name: str,
                    uploading_user: str,
@@ -122,15 +127,26 @@ def pull_files(db_instance: DataBase=None,
     files = db_instance.cursor.fetchall()
     return files
 
+def clear_tfa_table():
+    run(command="""DELETE FROM TFA""")
+
+def insert_tfa_data(key, img_data):
+    run(command="""INSERT INTO TFA(key,
+                                   QR_code)
+                    VALUES(?, ?)""",
+        insertion_values=(key, img_data))
+
+def pull_tfa_data(db_instance: DataBase=None):
+    if not db_instance:
+        db_instance = DataBase(db_name)
+
+    db_instance.cursor.execute('SELECT * FROM TFA')
+    tfa_data: Tuple = db_instance.cursor.fetchone()
+    db_instance.close()
+    return tfa_data
 
 if __name__ == '__main__':
     db_instance = DataBase(db_name)
     initialize_db(db_instance)
-
-    # pull_files(db_instance,
-    #            fields=['filename', 'content'],
-    #            where_dict={'filename': 'ido.txt',
-    #                        'uploaded_by': 'Ido'})
-
 
 

@@ -1,6 +1,5 @@
 import os
 
-print(os.getcwd())
 cur_dir = os.path.join(os.getcwd(),
                        r'TrustyFileShare\Server')
 shift = 3
