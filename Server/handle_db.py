@@ -1,8 +1,10 @@
 import sqlite3
 from datetime import datetime
 import common
+from common import File, TFA
 from typing import Tuple, Optional, Dict, List, Any, Union
 import os
+import pickle
 
 db_name = 'TFS.db'
 
@@ -43,20 +45,24 @@ def run(command: str,
 def pull_user_value(username, password,
                     db_instance: Optional[DataBase]=None) -> Optional[Tuple[int, str, str]]:
     """
-    return a database entry corresponding to the info given
+    returns a user object with the given user info
     :param db_instance: instance of the database
     :param username: the username
     :param password: the password (hashed)
-    :return: the entry itself if exists, none otherwise
+    :return: the user object if exists, none otherwise
     """
     if not db_instance:
         db_instance = DataBase(db_name)
-    db_instance.cursor.execute(
-        "SELECT * FROM users WHERE username = ? AND password = ?",
-        (username, password))
-    user_data = db_instance.cursor.fetchone()
+    db_instance.cursor.execute("SELECT user_obj FROM users")
+
+    users_data = db_instance.cursor.fetchone()
     db_instance.close()
-    return user_data
+
+    users = [pickle.loads(user_data) for user_data in users_data]
+    for user in users:
+        if user.username == username and \
+           user.password == password:
+            return user
 
 
 def initialize_db(db_instance=None):
@@ -67,83 +73,74 @@ def initialize_db(db_instance=None):
     :return:
     """
     run(command="""CREATE TABLE IF NOT EXISTS users(
-        ID INTEGER PRIMARY KEY, username TEXT UNIQUE, 
-        password TEXT, isadmin BOOLEAN)""", db_instance=db_instance)
+        ID INTEGER PRIMARY KEY, user_obj BLOB)""", db_instance=db_instance)
 
     for user in common.users:
-        run(command=f"""INSERT OR IGNORE INTO users (username, password, isadmin) 
-            VALUES(?, ?, ?)""", insertion_values=(user.username, user.password, user.is_admin),
+        serialized_user = pickle.dumps(user)
+        run(command=f"""INSERT OR IGNORE INTO users (user_obj) 
+            VALUES(?)""", insertion_values=(sqlite3.Binary(serialized_user),),
             db_instance=db_instance)
 
     run(command="""CREATE TABLE IF NOT EXISTS files(
                 ID INTEGER PRIMARY KEY,
-                filename TEXT,
-                uploaded_by TEXT,
-                upload_time TEXT,
-                content TEXT)""",
+                file_obj BLOB)""",
         db_instance=db_instance)
 
     run(command="""CREATE TABLE IF NOT EXISTS TFA(
-                    key TEXT,
-                    QR_code TEXT)""",
+                    tfa_obj BLOB)""",
         db_instance=db_instance)
 
 
-def add_file_to_db(file_name: str,
-                   uploading_user: str,
-                   file_content: bytes):
-    cur_time = datetime.now()
-    upload_time = cur_time.strftime('%d/%m/%y %H:%M:%S')
+def add_file_to_db(file_obj: File):
 
-    run(command=f"""INSERT INTO files(filename,
-                                      uploaded_by, upload_time,
-                                      content)
-                VALUES(?, ?, ?, ?)""",
-        insertion_values=(file_name, uploading_user, upload_time,
-                          file_content.hex()))
+    serialized_file = pickle.dumps(file_obj)
+    run(command=f"""INSERT INTO files(file_obj)
+                VALUES(?)""",
+        insertion_values=(serialized_file,))
 
 def pull_files(db_instance: DataBase=None,
-               fields: List[str]=None,
-               where_dict: Dict[str, str]=None) -> List[Tuple]:
+               where_dict: Dict[str, str]=None) -> List[File]:
     """
-    pulls data about files according to given parameters
+    pulls file(s) object(s) according to given parameters
     :param db_instance: instance of the db
-    :param fields: which fields to pull, as a list of strings
     :param where_dict: a dict of WHERE conditions (field_name: value)
-    :return: list of tuples, where in each tuple are the requested fields
+    :return: list of all matching file objects
     """
     if not db_instance:
         db_instance = DataBase(db_name)
     if not where_dict:
         where_dict = {}
 
-    query = f"""SELECT {', '.join(fields)} FROM files WHERE true"""
+    query = f"""SELECT file_obj FROM files WHERE true"""
 
     values = []
     for field_name, value in where_dict.items():
         query += f' AND {field_name} = ?'
         values.append(value)
-    db_instance.cursor.execute(query, tuple(values))
-    files = db_instance.cursor.fetchall()
+    db_instance.cursor.execute(query, tuple(values))  # commit query
+    serialized_files = db_instance.cursor.fetchall()
+    files = [pickle.loads(file_data) for file_data in serialized_files]
     return files
 
 def clear_tfa_table():
     run(command="""DELETE FROM TFA""")
 
-def insert_tfa_data(key, img_data):
-    run(command="""INSERT INTO TFA(key,
-                                   QR_code)
-                    VALUES(?, ?)""",
-        insertion_values=(key, img_data))
+def insert_tfa_data(tfa_obj: TFA):
+    serialized_obj = pickle.dumps(tfa_obj)
+    run(command="""INSERT INTO TFA(tfa_obj)
+                    VALUES(?)""",
+        insertion_values=(sqlite3.Binary(serialized_obj),))
 
-def pull_tfa_data(db_instance: DataBase=None):
+def pull_tfa_data(db_instance: DataBase=None) -> TFA:
     if not db_instance:
         db_instance = DataBase(db_name)
 
-    db_instance.cursor.execute('SELECT * FROM TFA')
-    tfa_data: Tuple = db_instance.cursor.fetchone()
+    db_instance.cursor.execute('SELECT tfa_obj FROM TFA')
+    tfa_data: Tuple[TFA, None] = db_instance.cursor.fetchone()
+    tfa_obj = pickle.loads(tfa_data[0])
+
     db_instance.close()
-    return tfa_data
+    return tfa_obj
 
 if __name__ == '__main__':
     db_instance = DataBase(db_name)

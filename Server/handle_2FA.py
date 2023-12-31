@@ -4,11 +4,17 @@ from handle_string_manipulation import \
     encrypt, decrypt
 import handle_db
 from typing import Optional
+from common import TFA
 
 def generate_new_key() -> str:
     secret_key = pyotp.random_base32()
+    encrypted_key = encrypt(secret_key.encode()).hex()
 
-    return encrypt(secret_key.encode()).hex()
+    # TODO: REMOVE
+    with open('key.txt', 'w') as f:
+        f.write(encrypted_key)
+
+    return encrypted_key
 
 
 def generate_qr_img(totp) -> str:
@@ -27,8 +33,9 @@ def generate_qr_img(totp) -> str:
 def create_new_otp():
     key = generate_new_key()
     img = generate_qr_img(get_totp(key))
+    tfa_obj = TFA(key=key, qr_img=img)
 
-    handle_db.insert_tfa_data(key, img)
+    handle_db.insert_tfa_data(tfa_obj=tfa_obj)
 
 
 def is_token_valid(user_input_token):
@@ -40,7 +47,7 @@ def is_token_valid(user_input_token):
 
 def get_totp(key: Optional[str]=None):
     if not key:
-        key, _ = handle_db.pull_tfa_data()
+        key = handle_db.pull_tfa_data().key
     key = decrypt(bytes.fromhex(key)).decode()
 
     return pyotp.TOTP(key)

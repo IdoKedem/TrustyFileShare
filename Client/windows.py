@@ -1,12 +1,15 @@
 import os.path
 from tkinter import messagebox
 from common import LoginEnum, hash_text, User, FileEnum, \
-    encapsulate_data, decapsulate_data, File, TryLogin
+    encapsulate_data, decapsulate_data, File, TryLogin, \
+    send_pickle_obj, recv_pickle_obj
+
 import tkinter as tk
 from tkinter import filedialog
 from typing import List, Dict, Optional, Union, Tuple, Any
 import socket
 import time
+import pickle
 
 cur_dir = os.path.join(os.getcwd(),
                        r'TrustyFileShare\Client')
@@ -147,15 +150,8 @@ class MainWindow(BaseWindow):
                              uploading_user=self.user,
                              file_content=file_content)
 
-        file_details_string: bytes = \
-            encapsulate_data([file_name,
-                              self.user.username, file_content])
-        file_content_size = len(file_content)
-
         self.client_socket.send(FileEnum.SENDING_FILE_DATA.encode())
-        self.client_socket.send(str(file_content_size).encode())
-        time.sleep(0.2)
-        self.client_socket.send(file_details_string)
+        send_pickle_obj(uploaded_file, self.client_socket)
 
         file_status = self.client_socket.recv(1024)
         if file_status == FileEnum.FILE_REJECTED.encode():
@@ -285,9 +281,7 @@ class LoginMenu(BaseFrame):
             self.try_again_label.pack()
 
         elif response == LoginEnum.VALID_LOGIN_INFO:
-            user_data = self.client_socket.recv(1024)
-            username, password, is_admin = decapsulate_data(user_data)
-            self.user = User(username.decode(), password.decode(), is_admin.decode())
+            self.user = recv_pickle_obj(self.client_socket)
 
             LoginTopLevel(displayed_on=self.displayed_on,
                           logged_user=self.user)
@@ -353,16 +347,12 @@ class DownloadsMenu(BaseFrame):
         self.client_socket.send(FileEnum.REQUESTING_FILE_DATA.encode())
         self.client_socket.send(str(requested_file_ind).encode())
 
-        file_name = self.client_socket.recv(1024).decode()
-        #print(file_name)
-        file_size = int(self.client_socket.recv(1024).decode())
-        file_content = self.client_socket.recv(file_size)
-        #print(file_content)
+        file: File = recv_pickle_obj(self.client_socket)[0]
 
         if not os.path.exists(cur_dir + r'\Downloads'):
             os.mkdir(cur_dir + r'\Downloads')
-        with open(cur_dir + rf'\Downloads\{file_name}', 'wb') as f:
-            f.write(file_content)
+        with open(cur_dir + rf'\Downloads\{file.name}', 'wb') as f:
+            f.write(file.content)
 
 
 class FileListboxFrame(BaseFrame):

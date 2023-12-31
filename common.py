@@ -1,7 +1,9 @@
 from hashlib import md5
 from typing import List, Any, Tuple, Union
 from datetime import datetime
+import pickle
 from enum import Enum
+import time
 
 class SocketEnum:
     SERVER_IP = '127.0.0.1'
@@ -62,6 +64,22 @@ def decapsulate_data(data_string: bytes) -> Tuple[bytes, ...]:
     data = data_string.split(SocketEnum.SPLIT_TEXT.encode())
     return tuple(data[1:])
 
+def send_pickle_obj(obj, client_socket):
+    serialized_obj: bytes = pickle.dumps(obj)
+    obj_size = len(serialized_obj)
+
+    client_socket.send(str(obj_size).encode())
+    #time.sleep(0.2)
+    client_socket.send(serialized_obj)
+
+def recv_pickle_obj(client_socket):
+    obj_size = int(client_socket.recv(1024).decode())
+    #obj_size = client_socket.recv(1024)
+
+    serialized_obj = client_socket.recv(1024 + obj_size)
+    #serialized_obj = client_socket.recv(1024 + int(obj_size.decode()))
+    return pickle.loads(serialized_obj)
+
 
 class User:
     def __init__(self, username: str, password: str, is_admin: str='False'):
@@ -79,7 +97,7 @@ class User:
 class File:
     def __init__(self, file_name,
                  uploading_user: User, file_content: bytes):
-        self.file_name = file_name
+        self.name = file_name
         self.uploading_user = uploading_user
         self.content: bytes = file_content
 
@@ -91,6 +109,11 @@ class TryLogin:
         self.username = username
         self.password = password
 
+class TFA:
+    def __init__(self, key: str, qr_img: str):
+        ## key and img are encrypted
+        self.key = key
+        self.qr_img = qr_img
 
 
 users = \
