@@ -1,5 +1,6 @@
 from hashlib import md5
 from typing import List, Any, Tuple, Union
+from datetime import datetime
 from enum import Enum
 
 class SocketEnum:
@@ -40,6 +41,8 @@ class FileEnum:
     FILE_ACCEPTED = 'File Accepted!'
 
 
+
+
 def hash_text(text):
     return md5(text.encode()).hexdigest()
 
@@ -71,5 +74,24 @@ class User:
     def __str__(self):
         return \
             f'Username: {self.username}\nPassword: {self.password}'
+
+
+class File:
+    def __init__(self, file_name,
+                 uploading_user: User, file_content: bytes):
+        self.file_name = file_name
+        self.uploading_user = uploading_user
+        self.content: bytes = file_content
+
+        cur_time = datetime.now()
+        self.upload_time = cur_time.strftime('%d/%m/%y %H:%M:%S')
+
+class TryLogin:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+
+
 users = \
     [User('Ido', '123', is_admin='True'), User('Kedem', '456')]

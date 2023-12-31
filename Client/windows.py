@@ -1,7 +1,7 @@
 import os.path
 from tkinter import messagebox
 from common import LoginEnum, hash_text, User, FileEnum, \
-    encapsulate_data, decapsulate_data
+    encapsulate_data, decapsulate_data, File, TryLogin
 import tkinter as tk
 from tkinter import filedialog
 from typing import List, Dict, Optional, Union, Tuple, Any
@@ -143,6 +143,10 @@ class MainWindow(BaseWindow):
             return
         file_name = os.path.basename(file_path)
 
+        uploaded_file = File(file_name=file_name,
+                             uploading_user=self.user,
+                             file_content=file_content)
+
         file_details_string: bytes = \
             encapsulate_data([file_name,
                               self.user.username, file_content])
@@ -252,44 +256,6 @@ class LoginMenu(BaseFrame):
             self.info_form: {'pady': 60}
         }
         self.pack_widgets()
-        #self.prepare_window()
-
-    # def prepare_form(self):
-    #     """
-    #     prepares the login form, with all its widgets
-    #     :return:
-    #     """
-    #     tk.Label(self.info_form, text='Login',
-    #              font=('', 24)).pack()
-    #     username_frame = \
-    #         BaseFrame(self.info_form,
-    #                   frame_args={
-    #                       'width': '400',
-    #                       'height': '100',
-    #                       'pady': '15'})
-    #     self.entries.append(
-    #         username_frame.prepare_form_entry('Username'))
-    #
-    #     password_frame = \
-    #         BaseFrame(self.info_form,
-    #                   frame_args={
-    #                       'width': '400',
-    #                       'height': '100',
-    #                       'pady': '5'})
-    #     self.entries.append(
-    #         password_frame.prepare_form_entry('Password',
-    #                                           entry_show='*'))
-    #
-    #     self.submit_btn = tk.Button(
-    #         master=self.info_form,
-    #         text='Submit',
-    #         command=self.check_login,
-    #         height=1, font=self.default_font, cursor='hand2'
-    #     )
-    #     username_frame.pack()
-    #     password_frame.pack()
-    #     self.submit_btn.pack()
-
 
     def check_login(self):
         """
@@ -306,6 +272,9 @@ class LoginMenu(BaseFrame):
 
             credentials_data.append(entry_text)
         credentials_string = encapsulate_data(credentials_data)
+
+        # try_login_info = TryLogin(username=username,
+        #                           password=password)
 
         self.client_socket.send(LoginEnum.SENDING_LOGIN_INFO.encode())
         self.client_socket.send(credentials_string)

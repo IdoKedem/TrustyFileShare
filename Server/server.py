@@ -8,6 +8,8 @@ import handle_string_manipulation
 import time
 import os
 
+
+
 def accept_client():
     while True:
         client, ip = server_socket.accept()
