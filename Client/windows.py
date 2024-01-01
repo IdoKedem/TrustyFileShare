@@ -11,8 +11,9 @@ import socket
 import time
 import pickle
 
-cur_dir = os.path.join(os.getcwd(),
-                       r'TrustyFileShare\Client')
+cur_dir = os.path.join(os.getcwd())
+if os.path.basename(cur_dir) != 'Client':
+    cur_dir = os.path.join(cur_dir, 'Client')
 
 
 class BaseWindow(tk.Tk):
@@ -380,21 +381,15 @@ class FileListboxFrame(BaseFrame):
     def show_file_titles(self):
         self.listbox.delete(0, tk.END)
         self.client_socket.send(
-            FileEnum.REQUESTING_ALL_FILE_TITLES.encode())
-        file_count = int(self.client_socket.recv(1024))
+            FileEnum.REQUESTING_FILE_DATA.encode())
+        self.client_socket.send(b'-1') # get all files
 
-        file_titles: List[List[bytes, bytes, bytes]] = []
-        for _ in range(file_count):
-            file_title: Tuple[bytes, ...] = decapsulate_data(
-                self.client_socket.recv(1024))
-            file_titles.append([*file_title])
-            self.client_socket.send(b'ready')
-        print(file_titles)
+        all_files: List[File] = recv_pickle_obj(self.client_socket)
 
-        for ind, row_data in enumerate(file_titles):
-            filename, uploaded_by, upload_time = row_data
+        for ind, file in enumerate(all_files):
             formatted_row = \
-                f'{ind + 1}. {filename.decode()} ({uploaded_by.decode()}, {upload_time.decode()})'
+                f'{ind + 1}. {file.name} ({file.uploading_user.username},' \
+                f' {file.upload_time})'
             self.listbox.insert(tk.END, formatted_row)
 
 

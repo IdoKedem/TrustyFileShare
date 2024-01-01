@@ -69,15 +69,15 @@ def send_pickle_obj(obj, client_socket):
     obj_size = len(serialized_obj)
 
     client_socket.send(str(obj_size).encode())
-    #time.sleep(0.2)
+    time.sleep(0.1)
     client_socket.send(serialized_obj)
 
 def recv_pickle_obj(client_socket):
-    obj_size = int(client_socket.recv(1024).decode())
-    #obj_size = client_socket.recv(1024)
+    # obj_size = int(client_socket.recv(1024).decode())
+    obj_size = client_socket.recv(1024)
 
-    serialized_obj = client_socket.recv(1024 + obj_size)
-    #serialized_obj = client_socket.recv(1024 + int(obj_size.decode()))
+    # serialized_obj = client_socket.recv(1024 + obj_size)
+    serialized_obj = client_socket.recv(1024 + int(obj_size.decode()))
     return pickle.loads(serialized_obj)
 
 

@@ -98,7 +98,6 @@ def send_file_data(client):
         where_dict = {'ID': file_ind}
     files: List[File] = \
         pull_files(where_dict=where_dict)
-
     send_pickle_obj(files, client)
 
 

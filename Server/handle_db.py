@@ -118,8 +118,9 @@ def pull_files(db_instance: DataBase=None,
         query += f' AND {field_name} = ?'
         values.append(value)
     db_instance.cursor.execute(query, tuple(values))  # commit query
-    serialized_files = db_instance.cursor.fetchall()
-    files = [pickle.loads(file_data) for file_data in serialized_files]
+    serialized_files: List[Tuple[bytes, None]] = db_instance.cursor.fetchall()
+
+    files = [pickle.loads(file_data[0]) for file_data in serialized_files]
     return files
 
 def clear_tfa_table():
