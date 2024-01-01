@@ -259,22 +259,18 @@ class LoginMenu(BaseFrame):
         validates the inputted credentials with the server
         :return:
         """
-        credentials_data = []
+        entered_data = []
 
         for entry_index, entry in enumerate(self.info_form.entries):
             entry_text = entry.get()
             entry.delete(0, tk.END)
-            if entry_index == 1:    # password entry
-                entry_text = hash_text(entry_text)
 
-            credentials_data.append(entry_text)
-        credentials_string = encapsulate_data(credentials_data)
-
-        # try_login_info = TryLogin(username=username,
-        #                           password=password)
+            entered_data.append(entry_text)
+        login_try = TryLogin(username=entered_data[0],
+                             password=hash_text(entered_data[1]))
 
         self.client_socket.send(LoginEnum.SENDING_LOGIN_INFO.encode())
-        self.client_socket.send(credentials_string)
+        send_pickle_obj(login_try, self.client_socket)
 
         response = self.client_socket.recv(1024).decode()
 

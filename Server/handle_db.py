@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 import common
-from common import File, TFA
+from common import File, TFA, User
 from typing import Tuple, Optional, Dict, List, Any, Union
 import os
 import pickle
@@ -43,7 +43,7 @@ def run(command: str,
     db_instance.cursor.execute(command, insertion_values)
     db_instance.connection.commit()
 def pull_user_value(username, password,
-                    db_instance: Optional[DataBase]=None) -> Optional[Tuple[int, str, str]]:
+                    db_instance: Optional[DataBase]=None) -> Union[User, None]:
     """
     returns a user object with the given user info
     :param db_instance: instance of the database

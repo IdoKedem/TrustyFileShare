@@ -1,7 +1,7 @@
 import socket
 from threading import Thread
 from common import SocketEnum, LoginEnum, FileEnum,\
-    encapsulate_data, decapsulate_data, File, User, \
+    encapsulate_data, decapsulate_data, File, User, TryLogin, \
     send_pickle_obj, recv_pickle_obj
 from typing import Dict, List, Tuple, Union
 from handle_2FA import is_token_valid
@@ -54,9 +54,8 @@ def receive_msg(client):
 def check_login(client):
     from handle_db import pull_user_value
 
-    login_info = client.recv(1024)  # TODO: use pickle
-    username, password = decapsulate_data(login_info)
-    user: Union[User, None] = pull_user_value(username.decode(), password.decode())
+    login_try: TryLogin = recv_pickle_obj(client)
+    user: User = pull_user_value(login_try.username, login_try.password)
     if user:
         client.send(LoginEnum.VALID_LOGIN_INFO.encode())
         send_pickle_obj(user, client)
