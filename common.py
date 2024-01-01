@@ -2,13 +2,11 @@ from hashlib import md5
 from typing import List, Any, Tuple, Union
 from datetime import datetime
 import pickle
-from enum import Enum
 import time
 
 class SocketEnum:
     SERVER_IP = '127.0.0.1'
     PORT = 6666
-    SPLIT_TEXT = '!@#$%^&*()'
 
 class LoginEnum:
     SENDING_LOGIN_INFO = 'Sending Login Info!'
@@ -48,22 +46,6 @@ class FileEnum:
 def hash_text(text):
     return md5(text.encode()).hexdigest()
 
-
-def encapsulate_data(data_list:
-                     Union[Tuple[Union[str, bytes], ...],
-                           List[Union[str, bytes]]]) -> bytes:
-    output = b''
-    #print(data_list)
-    for data in data_list:
-        if isinstance(data, str):
-            data = data.encode()
-        output += SocketEnum.SPLIT_TEXT.encode() + data
-    return output
-
-def decapsulate_data(data_string: bytes) -> Tuple[bytes, ...]:
-    data = data_string.split(SocketEnum.SPLIT_TEXT.encode())
-    return tuple(data[1:])
-
 def send_pickle_obj(obj, client_socket):
     serialized_obj: bytes = pickle.dumps(obj)
     obj_size = len(serialized_obj)
@@ -73,11 +55,9 @@ def send_pickle_obj(obj, client_socket):
     client_socket.send(serialized_obj)
 
 def recv_pickle_obj(client_socket):
-    # obj_size = int(client_socket.recv(1024).decode())
-    obj_size = client_socket.recv(1024)
+    obj_size = int(client_socket.recv(1024).decode())
 
-    # serialized_obj = client_socket.recv(1024 + obj_size)
-    serialized_obj = client_socket.recv(1024 + int(obj_size.decode()))
+    serialized_obj = client_socket.recv(1024 + obj_size)
     return pickle.loads(serialized_obj)
 
 

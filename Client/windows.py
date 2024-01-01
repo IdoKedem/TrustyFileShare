@@ -1,7 +1,7 @@
 import os.path
 from tkinter import messagebox
 from common import LoginEnum, hash_text, User, FileEnum, \
-    encapsulate_data, decapsulate_data, File, TryLogin, \
+    File, TryLogin, \
     send_pickle_obj, recv_pickle_obj
 
 import tkinter as tk
@@ -17,6 +17,9 @@ if os.path.basename(cur_dir) != 'Client':
 
 
 class BaseWindow(tk.Tk):
+    """
+    A base class for all windows
+    """
     def __init__(self, title: str, client_socket: socket.socket,
                  width: int=800, height: int=800):
         super().__init__()
@@ -30,6 +33,9 @@ class BaseWindow(tk.Tk):
 
 
 class BaseFrame(tk.Frame):
+    """
+    A base class for all frames
+    """
     def __init__(self,
                  displayed_on: Union[BaseWindow, 'BaseFrame'],
                  frame_args: Optional=None):
@@ -62,15 +68,17 @@ class BaseFrame(tk.Frame):
         entry.pack()
         return entry
 
-
-
-
 class BaseForm(BaseFrame):
-    def __init__(self,
-                 displayed_on: Union[BaseWindow, BaseFrame, 'BaseForm'],
-                 form_title: str,
-                 entries_dict: Dict[str, Dict[str, Any]],
-                 frame_args: Optional=None):
+    """
+    A base class for all forms
+    """
+
+    def __init__(
+            self,
+             displayed_on: Union[BaseWindow, BaseFrame, 'BaseForm'],
+             form_title: str,
+             entries_dict: Dict[str, Dict[str, Any]],
+             frame_args: Optional=None):
 
         self.form_title = form_title
         self.entries_dict = entries_dict
@@ -92,8 +100,10 @@ class BaseForm(BaseFrame):
                 BaseFrame(self,
                           entry_data['frame_args'])
             self.frames.append(cur_frame)
-            self.entries.append(cur_frame.prepare_form_entry(
-                                          entry_name, entry_data['show']))
+            self.entries.append(
+                cur_frame.prepare_form_entry(
+                                             entry_name,
+                                             entry_data['show']))
         for frame in self.frames:
             frame.pack()
 
@@ -136,6 +146,11 @@ class MainWindow(BaseWindow):
         self.create_user_menu.pack()
 
     def upload_file_to_db(self):
+        """
+        opens a file selection dialog and uploads the
+        selected file to the db
+        :return:
+        """
         file_path = filedialog.askopenfilename(
             title='Select a file to upload',
             filetypes=FileEnum.SUPPORTED_FILE_TYPES)
@@ -160,7 +175,7 @@ class MainWindow(BaseWindow):
                                  message='SYSTEM CENSORED BANNED WORDS')
 
 
-class LoginTopLevel(tk.Toplevel):
+class TFADialog(tk.Toplevel):
     def __init__(self,
                  displayed_on: MainWindow, logged_user: User):
         super().__init__()
@@ -191,17 +206,13 @@ class LoginTopLevel(tk.Toplevel):
         self.client_socket.send(token.encode())
 
         response = self.client_socket.recv(1024).decode()
-        #print(response)
+
         if response == LoginEnum.VALID_TOTP_TOKEN:
             self.destroy()
             self.parent.destroy()
             MainWindow(client_socket=self.client_socket,
                        logged_user=self.user,
                        is_skip_login=True).mainloop()
-
-
-
-
 
 class LoginMenu(BaseFrame):
     def __init__(self,
@@ -213,8 +224,7 @@ class LoginMenu(BaseFrame):
             {
                'highlightbackground': 'green',
                'highlightthickness': 2
-               }
-
+            }
         entries_dict = {
             'Username': {'frame_args': {'width': '400',
                                         'height': '100',
@@ -225,6 +235,9 @@ class LoginMenu(BaseFrame):
                                         'pady': '5'},
                          'show': '*'}
         }
+
+        self.user = None
+
         self.info_form = \
             BaseForm(self,
                      form_title='Login',
@@ -242,10 +255,6 @@ class LoginMenu(BaseFrame):
             height=1, font=self.default_font, cursor='hand2'
         )
         self.submit_btn.pack()
-
-        #self.entries = []
-
-        #self.prepare_form()
 
         self.widgets = {
             tk.Label(text="TFS by Ido Kedem",
@@ -280,8 +289,8 @@ class LoginMenu(BaseFrame):
         elif response == LoginEnum.VALID_LOGIN_INFO:
             self.user = recv_pickle_obj(self.client_socket)
 
-            LoginTopLevel(displayed_on=self.displayed_on,
-                          logged_user=self.user)
+            TFADialog(displayed_on=self.displayed_on,
+                      logged_user=self.user)
             self.displayed_on.withdraw()
 
 class MainMenu(BaseFrame):
@@ -303,7 +312,6 @@ class MainMenu(BaseFrame):
                       font=self.default_font): {},
         }
         self.pack_widgets()
-
 
 
 class DownloadsMenu(BaseFrame):
@@ -339,7 +347,12 @@ class DownloadsMenu(BaseFrame):
                       command=self.request_file): {}
         }
         self.pack_widgets()
+
     def request_file(self):
+        """
+        request a file object from the server and saves it locally
+        :return:
+        """
         requested_file_ind: int = self.file_listbox_frame.listbox.curselection()[0] + 1
         self.client_socket.send(FileEnum.REQUESTING_FILE_DATA.encode())
         self.client_socket.send(str(requested_file_ind).encode())
@@ -350,7 +363,6 @@ class DownloadsMenu(BaseFrame):
             os.mkdir(cur_dir + r'\Downloads')
         with open(cur_dir + rf'\Downloads\{file.name}', 'wb') as f:
             f.write(file.content)
-
 
 class FileListboxFrame(BaseFrame):
     def __init__(self,
@@ -375,6 +387,10 @@ class FileListboxFrame(BaseFrame):
         self.pack_widgets()
 
     def show_file_titles(self):
+        """
+        show details about all files in the database
+        :return:
+        """
         self.listbox.delete(0, tk.END)
         self.client_socket.send(
             FileEnum.REQUESTING_FILE_DATA.encode())
@@ -427,40 +443,5 @@ class CreateUserMenu(BaseFrame):
         }
         self.pack_widgets()
 
-    def prepare_form(self):
-        """
-        prepares the login form, with all its widgets
-        :return:
-        """
-        tk.Label(self.info_form, text='Create New User',
-                 font=('', 24)).pack()
-        username_frame = \
-            BaseFrame(self.info_form,
-                      frame_args={
-                          'width': '400',
-                          'height': '100',
-                          'pady': '15'})
-        self.entries.append(
-            username_frame.prepare_form_entry('Username'))
-
-        password_frame = \
-            BaseFrame(self.info_form,
-                      frame_args={
-                          'width': '400',
-                          'height': '100',
-                          'pady': '5'})
-        self.entries.append(
-            password_frame.prepare_form_entry('Password',
-                                              entry_show='*'))
-
-        self.submit_btn = tk.Button(
-            master=self.info_form,
-            text='Submit',
-            command=lambda: 0,
-            height=1, font=self.default_font, cursor='hand2'
-        )
-        username_frame.pack()
-        password_frame.pack()
-        self.submit_btn.pack()
 
 

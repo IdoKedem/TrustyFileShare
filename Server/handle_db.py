@@ -68,8 +68,8 @@ def pull_user_value(username, password,
 def initialize_db(db_instance=None):
     """
     this function initialize the database at the start of the script
-    with a table of users, and a table of uploaded files
-    only adds users that dont already exist
+    with a table of users, a table of uploaded files, and a table for 2FA data
+    only adds users that don't already exist
     :return:
     """
     run(command="""CREATE TABLE IF NOT EXISTS users(
@@ -89,10 +89,14 @@ def initialize_db(db_instance=None):
     run(command="""CREATE TABLE IF NOT EXISTS TFA(
                     tfa_obj BLOB)""",
         db_instance=db_instance)
-
+    # TODO: init 2fa data
 
 def add_file_to_db(file_obj: File):
-
+    """
+    inserts a file object data to the db
+    :param file_obj: File type
+    :return:
+    """
     serialized_file = pickle.dumps(file_obj)
     run(command=f"""INSERT INTO files(file_obj)
                 VALUES(?)""",
@@ -118,21 +122,35 @@ def pull_files(db_instance: DataBase=None,
         query += f' AND {field_name} = ?'
         values.append(value)
     db_instance.cursor.execute(query, tuple(values))  # commit query
-    serialized_files: List[Tuple[bytes, None]] = db_instance.cursor.fetchall()
 
+    serialized_files: List[Tuple[bytes, None]] = db_instance.cursor.fetchall()
     files = [pickle.loads(file_data[0]) for file_data in serialized_files]
     return files
 
 def clear_tfa_table():
+    """
+    Deletes all records from the tfa table
+    :return:
+    """
     run(command="""DELETE FROM TFA""")
 
 def insert_tfa_data(tfa_obj: TFA):
+    """
+    receives a tfa object and inserts it into the db
+    :param tfa_obj: tfa object
+    :return:
+    """
     serialized_obj = pickle.dumps(tfa_obj)
     run(command="""INSERT INTO TFA(tfa_obj)
                     VALUES(?)""",
         insertion_values=(sqlite3.Binary(serialized_obj),))
 
-def pull_tfa_data(db_instance: DataBase=None) -> TFA:
+def pull_tfa_obj(db_instance: DataBase=None) -> TFA:
+    """
+    pulls the (only) tfa object from the db
+    :param db_instance:
+    :return:
+    """
     if not db_instance:
         db_instance = DataBase(db_name)
 
