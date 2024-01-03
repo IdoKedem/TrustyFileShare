@@ -62,6 +62,7 @@ def check_login(client):
     else:
         client.send(LoginEnum.INVALID_LOGIN_INFO.encode())
 
+
 def check_ttop_token(client):
     token = client.recv(1024).decode()
     if is_token_valid(token):
