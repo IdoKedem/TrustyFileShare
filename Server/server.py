@@ -46,7 +46,6 @@ def receive_msg(client):
                 send_file_data(client)
 
         except ConnectionResetError:
-            # Handle client disconnection
             print(f'Client {clients[client]} disconnected.')
             del clients[client]
             break
