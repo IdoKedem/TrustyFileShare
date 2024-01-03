@@ -417,7 +417,6 @@ class CreateUserMenu(BaseFrame):
                'highlightbackground': 'pink',
                'highlightthickness': 2
                }
-
         entries_dict = {
             'Username': {'show': None,
                          'frame_args': {'width': '400',
