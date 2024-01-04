@@ -8,14 +8,15 @@ class SocketEnum:
     SERVER_IP = '127.0.0.1'
     PORT = 6666
 
-class LoginEnum:
+class UserEnum:
     SENDING_LOGIN_INFO = 'Sending Login Info!'
-    VALID_LOGIN_INFO = 'Valid Login Info!'
-    INVALID_LOGIN_INFO = 'Invalid Login Info!'
-
     SENDING_TOTP_TOKEN = 'Sending TOTP Token!'
-    VALID_TOTP_TOKEN = 'Valid TOTP Token!'
-    INVALID_TOTP_TOKEN = 'Invalid TOTP Token'
+
+    CREATE_NEW_USER = 'Create New User!'
+
+    VALID_INFO = 'Valid Info!'
+    INVALID_INFO = 'Invalid Info!'
+
 
 class FileEnum:
     SENDING_FILE_DATA = 'Sending File Data!'
@@ -39,8 +40,6 @@ class FileEnum:
 
     FILE_REJECTED = 'File rejected'
     FILE_ACCEPTED = 'File Accepted!'
-
-
 
 
 def hash_text(text):

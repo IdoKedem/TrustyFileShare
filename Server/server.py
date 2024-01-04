@@ -1,6 +1,6 @@
 import socket
 from threading import Thread
-from common import SocketEnum, LoginEnum, FileEnum,\
+from common import SocketEnum, UserEnum, FileEnum, UserEnum, \
     File, User, TryLogin, \
     send_pickle_obj, recv_pickle_obj
 from typing import Dict, List, Tuple, Union
@@ -37,10 +37,10 @@ def receive_msg(client):
                 break
             print(f'Received message from {clients[client]}: {msg}')
 
-            if msg == LoginEnum.SENDING_LOGIN_INFO:
+            if msg == UserEnum.SENDING_LOGIN_INFO:
                 check_login(client)
 
-            elif msg == LoginEnum.SENDING_TOTP_TOKEN:
+            elif msg == UserEnum.SENDING_TOTP_TOKEN:
                 check_ttop_token(client)
 
             elif msg == FileEnum.SENDING_FILE_DATA:
@@ -61,17 +61,17 @@ def check_login(client):
     login_try: TryLogin = recv_pickle_obj(client)
     user: User = pull_user_value(login_try.username, login_try.password)
     if user:
-        client.send(LoginEnum.VALID_LOGIN_INFO.encode())
+        client.send(UserEnum.VALID_INFO.encode())
         send_pickle_obj(user, client)
     else:
-        client.send(LoginEnum.INVALID_LOGIN_INFO.encode())
+        client.send(UserEnum.INVALID_INFO.encode())
 
 def check_ttop_token(client):
     token = client.recv(1024).decode()
     if is_token_valid(token):
-        client.send(LoginEnum.VALID_TOTP_TOKEN.encode())
+        client.send(UserEnum.VALID_INFO.encode())
     else:
-        client.send(LoginEnum.INVALID_TOTP_TOKEN.encode())
+        client.send(UserEnum.INVALID_INFO.encode())
 
 def receive_file_data(client):
 

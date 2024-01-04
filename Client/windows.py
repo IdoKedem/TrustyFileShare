@@ -1,8 +1,8 @@
 import os.path
 from tkinter import messagebox
-from common import LoginEnum, hash_text, User, FileEnum, \
+from common import UserEnum, hash_text, User, FileEnum, \
     File, TryLogin, \
-    send_pickle_obj, recv_pickle_obj
+    send_pickle_obj, recv_pickle_obj, UserEnum
 
 import tkinter as tk
 from tkinter import filedialog
@@ -202,12 +202,12 @@ class TFADialog(tk.Toplevel):
         self.token_entry.delete(0, tk.END)
         if not token:
             return
-        self.client_socket.send(LoginEnum.SENDING_TOTP_TOKEN.encode())
+        self.client_socket.send(UserEnum.SENDING_TOTP_TOKEN.encode())
         self.client_socket.send(token.encode())
 
         response = self.client_socket.recv(1024).decode()
 
-        if response == LoginEnum.VALID_TOTP_TOKEN:
+        if response == UserEnum.VALID_INFO:
             self.destroy()
             self.parent.destroy()
             MainWindow(client_socket=self.client_socket,
@@ -278,15 +278,15 @@ class LoginMenu(BaseFrame):
         login_try = TryLogin(username=entered_data[0],
                              password=hash_text(entered_data[1]))
 
-        self.client_socket.send(LoginEnum.SENDING_LOGIN_INFO.encode())
+        self.client_socket.send(UserEnum.SENDING_LOGIN_INFO.encode())
         send_pickle_obj(login_try, self.client_socket)
 
         response = self.client_socket.recv(1024).decode()
 
-        if response == LoginEnum.INVALID_LOGIN_INFO:
+        if response == UserEnum.INVALID_INFO:
             self.try_again_label.pack()
 
-        elif response == LoginEnum.VALID_LOGIN_INFO:
+        elif response == UserEnum.VALID_INFO:
             self.user = recv_pickle_obj(self.client_socket)
 
             TFADialog(displayed_on=self.displayed_on,
@@ -410,8 +410,6 @@ class CreateUserMenu(BaseFrame):
                  displayed_on: MainWindow,
                  **frame_args):
         super().__init__(displayed_on, frame_args)
-
-
 
         f_args = \
             {
