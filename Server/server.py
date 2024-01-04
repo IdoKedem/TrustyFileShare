@@ -1,7 +1,7 @@
 import socket
 from threading import Thread
 from common import SocketEnum, LoginEnum, FileEnum,\
-    encapsulate_data, decapsulate_data, File, User, TryLogin, \
+    File, User, TryLogin, \
     send_pickle_obj, recv_pickle_obj
 from typing import Dict, List, Tuple, Union
 from handle_2FA import is_token_valid
@@ -36,12 +36,16 @@ def receive_msg(client):
             if not msg:
                 break
             print(f'Received message from {clients[client]}: {msg}')
+
             if msg == LoginEnum.SENDING_LOGIN_INFO:
                 check_login(client)
+
             elif msg == LoginEnum.SENDING_TOTP_TOKEN:
                 check_ttop_token(client)
+
             elif msg == FileEnum.SENDING_FILE_DATA:
                 receive_file_data(client)
+
             elif msg == FileEnum.REQUESTING_FILE_DATA:
                 send_file_data(client)
 

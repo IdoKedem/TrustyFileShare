@@ -138,8 +138,8 @@ class MainWindow(BaseWindow):
         self.main_menu.pack_forget()
         self.downloads_menu.file_listbox_frame.show_file_titles()
         self.downloads_menu.pack(fill='x')
-    def show_main_menu(self):
-        self.downloads_menu.pack_forget()
+    def show_main_menu(self, frame_to_hide: BaseFrame):
+        frame_to_hide.pack_forget()
         self.main_menu.pack()
     def show_create_user_menu(self):
         self.main_menu.pack_forget()
@@ -332,7 +332,7 @@ class DownloadsMenu(BaseFrame):
             tk.Button(self,
                       text='Back',
                       font=self.default_font,
-                      command=self.displayed_on.show_main_menu): {},
+                      command=lambda: self.displayed_on.show_main_menu(self)): {},
             self.file_listbox_frame: {'fill': 'x'},
             tk.Button(self,
                       text='↻',
@@ -410,7 +410,8 @@ class CreateUserMenu(BaseFrame):
                  displayed_on: MainWindow,
                  **frame_args):
         super().__init__(displayed_on, frame_args)
-        self.entries = []
+
+
 
         f_args = \
             {
@@ -431,6 +432,9 @@ class CreateUserMenu(BaseFrame):
         self.info_form = BaseForm(self, form_title='Create New User',
                                   entries_dict=entries_dict,
                                   frame_args=f_args)
+        tk.Checkbutton(self.info_form, text='Is Admin?',
+                       font=self.default_font).pack()
+
         tk.Button(
             master=self.info_form,
             text='Submit',
@@ -439,9 +443,16 @@ class CreateUserMenu(BaseFrame):
         ).pack()
 
         self.widgets = {
+            tk.Button(
+                self,
+                text='Back',
+                font=self.default_font,
+                command=lambda: self.displayed_on.show_main_menu(self)): {},
             self.info_form: {}
         }
         self.pack_widgets()
 
+    def create_user(self):
+        pass
 
 

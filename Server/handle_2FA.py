@@ -27,6 +27,7 @@ def generate_qr_img(totp) -> str:
         issuer_name='TFS')
     qrcode.make(totp_uri).save('img.png')
 
+    #TODO: ENCRYPT IMG BEFORE WRITING
     with open('img.png', 'rb') as f:
         img = f.read()
 

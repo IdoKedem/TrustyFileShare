@@ -2,6 +2,7 @@ import sqlite3
 from datetime import datetime
 import common
 from common import File, TFA, User
+from handle_string_manipulation import encrypt
 from typing import Tuple, Optional, Dict, List, Any, Union
 import os
 import pickle
@@ -89,7 +90,14 @@ def initialize_db(db_instance=None):
     run(command="""CREATE TABLE IF NOT EXISTS TFA(
                     tfa_obj BLOB)""",
         db_instance=db_instance)
-    # TODO: init 2fa data
+
+    if os.path.exists('key.txt') and os.path.exists('img.png'):
+        with open('key.txt', 'r') as f:
+            key = f.read()
+        with open('img.png', 'rb') as f:
+            img = encrypt(f.read()).hex()
+        tfa_object = TFA(key=key, qr_img=img)
+        insert_tfa_data(tfa_object)
 
 def add_file_to_db(file_obj: File):
     """
