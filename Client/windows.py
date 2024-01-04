@@ -77,14 +77,15 @@ class BaseForm(BaseFrame):
             self,
              displayed_on: Union[BaseWindow, BaseFrame, 'BaseForm'],
              form_title: str,
-             entries_dict: Dict[str, Dict[str, Any]],
+             entries_config_dict: Dict[str, Dict[str, Any]],
              frame_args: Optional=None):
 
         self.form_title = form_title
-        self.entries_dict = entries_dict
+        self.entries_config_dict = entries_config_dict
         super().__init__(displayed_on, frame_args)
 
-        self.frames, self.entries = [], []
+        self.frames = []
+        self.entries_dict: Dict[str, tk.Entry] = {}
         self.prepare_form()
 
     def prepare_form(self):
@@ -95,15 +96,15 @@ class BaseForm(BaseFrame):
         tk.Label(self, text=self.form_title,
                  font=('', 24)).pack()
 
-        for entry_name, entry_data in self.entries_dict.items():
+        for entry_name, entry_data in self.entries_config_dict.items():
             cur_frame = \
                 BaseFrame(self,
                           entry_data['frame_args'])
             self.frames.append(cur_frame)
-            self.entries.append(
+            self.entries_dict[entry_name] = \
                 cur_frame.prepare_form_entry(
                                              entry_name,
-                                             entry_data['show']))
+                                             entry_data['show'])
         for frame in self.frames:
             frame.pack()
 
@@ -241,7 +242,7 @@ class LoginMenu(BaseFrame):
         self.info_form = \
             BaseForm(self,
                      form_title='Login',
-                     entries_dict=entries_dict,
+                     entries_config_dict=entries_dict,
                      frame_args=f_args)
 
         self.try_again_label = \
@@ -268,15 +269,14 @@ class LoginMenu(BaseFrame):
         validates the inputted credentials with the server
         :return:
         """
-        entered_data = []
+        username = self.info_form.entries_dict['Username'].get()
+        password = self.info_form.entries_dict['Password'].get()
 
-        for entry_index, entry in enumerate(self.info_form.entries):
-            entry_text = entry.get()
+        for entry in self.info_form.entries_dict.values():
             entry.delete(0, tk.END)
 
-            entered_data.append(entry_text)
-        login_try = TryLogin(username=entered_data[0],
-                             password=hash_text(entered_data[1]))
+        login_try = TryLogin(username=username,
+                             password=hash_text(password))
 
         self.client_socket.send(UserEnum.SENDING_LOGIN_INFO.encode())
         send_pickle_obj(login_try, self.client_socket)
@@ -428,15 +428,18 @@ class CreateUserMenu(BaseFrame):
                                         'pady': '5'}}
         }
         self.info_form = BaseForm(self, form_title='Create New User',
-                                  entries_dict=entries_dict,
+                                  entries_config_dict=entries_dict,
                                   frame_args=f_args)
-        tk.Checkbutton(self.info_form, text='Is Admin?',
-                       font=self.default_font).pack()
+        self.is_admin = tk.IntVar()
+        self.is_admin_btn = \
+            tk.Checkbutton(self.info_form, text='Is Admin?',
+                       variable=self.is_admin, font=self.default_font)
+        self.is_admin_btn.pack()
 
         tk.Button(
             master=self.info_form,
             text='Submit',
-            command=lambda: print(2),
+            command=self.create_user,
             height=1, font=self.default_font, cursor='hand2'
         ).pack()
 
@@ -451,6 +454,17 @@ class CreateUserMenu(BaseFrame):
         self.pack_widgets()
 
     def create_user(self):
-        pass
+        username = self.info_form.entries_dict['Username'].get()
+        password = self.info_form.entries_dict['Password'].get()
 
+        for entry in self.info_form.entries_dict.values():
+            entry.delete(0, tk.END)
 
+        print(username, password, self.is_admin.get())
+
+        self.client_socket.send(UserEnum.CREATE_NEW_USER.encode())
+        #TODO: encrypt user
+        self.client_socket.send(username.encode())
+
+        response = self.client_socket.recv(1024)
+        print(response)

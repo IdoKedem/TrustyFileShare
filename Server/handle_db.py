@@ -43,7 +43,7 @@ def run(command: str,
         db_instance = DataBase(db_name)
     db_instance.cursor.execute(command, insertion_values)
     db_instance.connection.commit()
-def pull_user_value(username, password,
+def pull_user_value(username, password: Optional[str]=None,
                     db_instance: Optional[DataBase]=None) -> Union[User, None]:
     """
     returns a user object with the given user info
@@ -59,10 +59,13 @@ def pull_user_value(username, password,
     users_data = db_instance.cursor.fetchone()
     db_instance.close()
 
-    users = [pickle.loads(user_data) for user_data in users_data]
-    for user in users:
-        if user.username == username and \
-           user.password == password:
+    all_users: List[User] = [pickle.loads(user_data) for user_data in users_data]
+    for user in all_users:
+        if not user.username == username:
+            continue
+        if not password:
+            return user
+        if user.password == password:
             return user
 
 

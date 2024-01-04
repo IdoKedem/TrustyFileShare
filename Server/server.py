@@ -49,6 +49,9 @@ def receive_msg(client):
             elif msg == FileEnum.REQUESTING_FILE_DATA:
                 send_file_data(client)
 
+            elif msg == UserEnum.CREATE_NEW_USER:
+                create_new_user(client)
+
         except ConnectionResetError:
             # Handle client disconnection
             print(f'Client {clients[client]} disconnected.')
@@ -102,6 +105,14 @@ def send_file_data(client):
     files: List[File] = \
         pull_files(where_dict=where_dict)
     send_pickle_obj(files, client)
+
+def create_new_user(client):
+    username = client.recv(1024).decode()
+    from handle_db import pull_user_value
+    if pull_user_value(username=username):
+        client.send(UserEnum.INVALID_INFO.encode())
+        return
+    client.send(UserEnum.VALID_INFO.encode())
 
 
 if __name__ == '__main__':
