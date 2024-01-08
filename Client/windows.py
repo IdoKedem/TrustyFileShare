@@ -1,7 +1,7 @@
 import os.path
 from tkinter import messagebox
 from common import UserEnum, hash_text, User, FileEnum, \
-    File, TryLogin, \
+    File, \
     send_pickle_obj, recv_pickle_obj, UserEnum
 
 import tkinter as tk
@@ -275,8 +275,8 @@ class LoginMenu(BaseFrame):
         for entry in self.info_form.entries_dict.values():
             entry.delete(0, tk.END)
 
-        login_try = TryLogin(username=username,
-                             password=hash_text(password))
+        login_try = User(username=username,
+                         password=password)
 
         self.client_socket.send(UserEnum.SENDING_LOGIN_INFO.encode())
         send_pickle_obj(login_try, self.client_socket)
@@ -463,7 +463,7 @@ class CreateUserMenu(BaseFrame):
         print(username, password, self.is_admin.get())
 
         self.client_socket.send(UserEnum.CREATE_NEW_USER.encode())
-        #TODO: encrypt user
+        # TODO: encrypt user
         self.client_socket.send(username.encode())
 
         response = self.client_socket.recv(1024)

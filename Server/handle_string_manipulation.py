@@ -1,3 +1,4 @@
+from hashlib import md5
 import os
 
 cur_dir = os.path.join(os.getcwd(),
@@ -39,3 +40,5 @@ def censor_string_words(input_string):
         censored_string = censored_string.replace(word, b'*' * len(word))
     return censored_string
 
+def hash_text(text):
+    return md5(text.encode()).hexdigest()

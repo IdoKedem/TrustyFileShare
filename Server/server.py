@@ -1,7 +1,7 @@
 import socket
 from threading import Thread
 from common import SocketEnum, UserEnum, FileEnum, UserEnum, \
-    File, User, TryLogin, \
+    File, User, \
     send_pickle_obj, recv_pickle_obj
 from typing import Dict, List, Tuple, Union
 from handle_2FA import is_token_valid
@@ -61,7 +61,7 @@ def receive_msg(client):
 def check_login(client):
     from handle_db import pull_user_value
 
-    login_try: TryLogin = recv_pickle_obj(client)
+    login_try: User = recv_pickle_obj(client)
     user: User = pull_user_value(login_try.username, login_try.password)
     if user:
         client.send(UserEnum.VALID_INFO.encode())

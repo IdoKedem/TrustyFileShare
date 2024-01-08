@@ -1,8 +1,10 @@
-from hashlib import md5
 from typing import List, Any, Tuple, Union
 from datetime import datetime
 import pickle
+from hashlib import md5
 import time
+
+
 
 class SocketEnum:
     SERVER_IP = '127.0.0.1'
@@ -42,8 +44,6 @@ class FileEnum:
     FILE_ACCEPTED = 'File Accepted!'
 
 
-def hash_text(text):
-    return md5(text.encode()).hexdigest()
 
 def send_pickle_obj(obj, client_socket):
     serialized_obj: bytes = pickle.dumps(obj)
@@ -61,8 +61,9 @@ def recv_pickle_obj(client_socket):
 
 
 class User:
-    def __init__(self, username: str, password: str, is_admin: str='False'):
-        self.username = username
+    def __init__(self, username: str, password: str,
+                 is_admin: Union[None, bool]=None):
+        self.username = encrypt(username.encode())
         self.password = hash_text(password)
         self.is_admin = is_admin
 
@@ -83,10 +84,6 @@ class File:
         cur_time = datetime.now()
         self.upload_time = cur_time.strftime('%d/%m/%y %H:%M:%S')
 
-class TryLogin:
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
 
 class TFA:
     def __init__(self, key: str, qr_img: str):
@@ -95,5 +92,39 @@ class TFA:
         self.qr_img = qr_img
 
 
+
+# TODO: REMOVE!!!! IMPORT FROM EXISTING
+def encrypt(plain_key: bytes) -> bytes:
+    shift = 3
+    midpoint = len(plain_key) // 2
+    mixed_plain = plain_key[midpoint:] + \
+                plain_key[:midpoint]
+
+    encrypted = b''
+    for char in mixed_plain:
+        encrypted += chr(char + shift).encode()
+
+    return encrypted
+
+def decrypt(cipher_key: bytes) -> bytes:
+    shift = 3
+    mixed_cipher_key = b''
+    for char in cipher_key:
+        mixed_cipher_key += (chr(char - shift)).encode()
+
+    midpoint = len(mixed_cipher_key) // 2
+    decrypted_utf8 = mixed_cipher_key[midpoint:] + \
+                     mixed_cipher_key[:midpoint]
+
+    return decrypted_utf8
+
+def hash_text(text):
+    return md5(text.encode()).hexdigest()
+
+
+# TODO: REMOVE!!!! IMPORT FROM EXISTING
+
+
 users = \
-    [User('Ido', '123', is_admin='True'), User('Kedem', '456')]
+    [User('Ido', '123', is_admin='True'),
+     User('Kedem', '456')]
