@@ -111,7 +111,7 @@ class BaseForm(BaseFrame):
 
 class BaseMenu(BaseFrame):
     def __init__(self,
-                 displayed_on: Union[BaseWindow, 'BaseFrame'],
+                 displayed_on: BaseWindow,
                  frame_args: Optional=None):
         super().__init__(displayed_on, frame_args)
 
@@ -120,6 +120,8 @@ class BaseMenu(BaseFrame):
     def show_menu(self, to_hide: 'BaseMenu'):
         to_hide.hide_menu()
         self.pack()
+    def show_main_menu(self):
+        self.displayed_on.main_menu.show_menu(to_hide=self)
 
 class MainWindow(BaseWindow):
     def __init__(self,
@@ -347,7 +349,7 @@ class DownloadsMenu(BaseMenu):
             tk.Button(self,
                       text='Back',
                       font=self.default_font,
-                      command=lambda: self.displayed_on.show_main_menu(self)): {},
+                      command=self.show_main_menu): {},
             self.file_listbox_frame: {'fill': 'x'},
             tk.Button(self,
                       text='↻',
@@ -463,19 +465,28 @@ class CreateUserMenu(BaseMenu):
             command=self.create_user,
             height=1, font=self.default_font, cursor='hand2'
         ).pack()
+
         self.user_exists_label = \
             tk.Label(self.info_form, text='Username already exists',
                      fg='red', font=('', 12))
+        self.created_successfully_label = \
+            tk.Label(self.info_form, text='Created Successfully',
+                     fg='green', font=('', 12))
 
         self.widgets = {
             tk.Button(
                 self,
                 text='Back',
                 font=self.default_font,
-                command=lambda: self.displayed_on.show_main_menu(self)): {},
+                command=self.show_main_menu): {},
             self.info_form: {}
         }
         self.pack_widgets()
+
+    def hide_menu(self):
+        self.user_exists_label.pack_forget()
+        self.created_successfully_label.pack_forget()
+        self.pack_forget()
 
     def create_user(self):
         username = self.info_form.entries_dict['Username'].get()
@@ -497,4 +508,4 @@ class CreateUserMenu(BaseMenu):
         if response == UserEnum.INVALID_INFO:
             self.user_exists_label.pack()
         elif response == UserEnum.VALID_INFO:
-            print(2)
+            self.created_successfully_label.pack()
