@@ -3,6 +3,7 @@ from tkinter import messagebox
 from common import UserEnum, hash_text, User, FileEnum, \
     File, \
     send_pickle_obj, recv_pickle_obj, UserEnum
+from abc import abstractmethod
 
 import tkinter as tk
 from tkinter import filedialog
@@ -108,7 +109,17 @@ class BaseForm(BaseFrame):
         for frame in self.frames:
             frame.pack()
 
+class BaseMenu(BaseFrame):
+    def __init__(self,
+                 displayed_on: Union[BaseWindow, 'BaseFrame'],
+                 frame_args: Optional=None):
+        super().__init__(displayed_on, frame_args)
 
+    def hide_menu(self):
+        self.pack_forget()
+    def show_menu(self, to_hide: 'BaseMenu'):
+        to_hide.hide_menu()
+        self.pack()
 
 class MainWindow(BaseWindow):
     def __init__(self,
@@ -215,7 +226,7 @@ class TFADialog(tk.Toplevel):
                        logged_user=self.user,
                        is_skip_login=True).mainloop()
 
-class LoginMenu(BaseFrame):
+class LoginMenu(BaseMenu):
     def __init__(self,
                  displayed_on: MainWindow,
                  **frame_args):
@@ -293,7 +304,7 @@ class LoginMenu(BaseFrame):
                       logged_user=self.user)
             self.displayed_on.withdraw()
 
-class MainMenu(BaseFrame):
+class MainMenu(BaseMenu):
     def __init__(self,
                  displayed_on: MainWindow,
                  **frame_args):
@@ -305,16 +316,20 @@ class MainMenu(BaseFrame):
                       command=displayed_on.upload_file_to_db,
                       font=self.default_font): {},
             tk.Button(self, text='Download',
-                      command=displayed_on.show_downloads_menu,
-                      font=self.default_font): {},
+                      font=self.default_font,
+                      command=lambda:
+                      displayed_on.downloads_menu.show_menu(
+                          to_hide=self)): {},
             tk.Button(self, text='Create User',
-                      command=displayed_on.show_create_user_menu,
-                      font=self.default_font): {},
+                      font=self.default_font,
+                      command=lambda:
+                      displayed_on.create_user_menu.show_menu(
+                          to_hide=self)): {},
         }
         self.pack_widgets()
 
 
-class DownloadsMenu(BaseFrame):
+class DownloadsMenu(BaseMenu):
     def __init__(self,
                  displayed_on: MainWindow,
                  **frame_args):
@@ -348,6 +363,11 @@ class DownloadsMenu(BaseFrame):
         }
         self.pack_widgets()
 
+    def show_menu(self, to_hide: 'BaseMenu'):
+        to_hide.pack_forget()
+        self.file_listbox_frame.show_file_titles()
+        self.pack(fill='x')
+
     def request_file(self):
         """
         request a file object from the server and saves it locally
@@ -363,6 +383,7 @@ class DownloadsMenu(BaseFrame):
             os.mkdir(cur_dir + r'\Downloads')
         with open(cur_dir + rf'\Downloads\{file.name}', 'wb') as f:
             f.write(file.content)
+
 
 class FileListboxFrame(BaseFrame):
     def __init__(self,
@@ -405,7 +426,7 @@ class FileListboxFrame(BaseFrame):
             self.listbox.insert(tk.END, formatted_row)
 
 
-class CreateUserMenu(BaseFrame):
+class CreateUserMenu(BaseMenu):
     def __init__(self,
                  displayed_on: MainWindow,
                  **frame_args):
