@@ -120,11 +120,9 @@ def decrypt(cipher_key: bytes) -> bytes:
 
 def hash_text(text):
     return md5(text.encode()).hexdigest()
-
-
 # TODO: REMOVE!!!! IMPORT FROM EXISTING
 
 
 users = \
-    [User('Ido', '123', is_admin='True'),
-     User('Kedem', '456')]
+    [User('Ido', '123', is_admin=True),
+     User('Kedem', '456', is_admin=False)]

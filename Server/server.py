@@ -107,12 +107,17 @@ def send_file_data(client):
     send_pickle_obj(files, client)
 
 def create_new_user(client):
-    username = client.recv(1024).decode()
+    new_user = recv_pickle_obj(client)
+
     from handle_db import pull_user_value
-    if pull_user_value(username=username):
+    if pull_user_value(username=new_user.username):
         client.send(UserEnum.INVALID_INFO.encode())
         return
     client.send(UserEnum.VALID_INFO.encode())
+
+    from handle_db import insert_user_value
+    insert_user_value(new_user)
+
 
 
 if __name__ == '__main__':

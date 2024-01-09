@@ -56,17 +56,34 @@ def pull_user_value(username, password: Optional[str]=None,
         db_instance = DataBase(db_name)
     db_instance.cursor.execute("SELECT user_obj FROM users")
 
-    users_data = db_instance.cursor.fetchone()
+    users_data: List[Tuple[bytes]] = db_instance.cursor.fetchall()
+    # print(users_data)
     db_instance.close()
 
-    all_users: List[User] = [pickle.loads(user_data) for user_data in users_data]
+    # print(f'looking for: {username}, {password}')
+    all_users: List[User] = [pickle.loads(user_data[0]) for user_data in users_data]
+
+    # print(all_users)
     for user in all_users:
+        # print(f'current: {user.username}, {user.password}')
         if not user.username == username:
             continue
-        if not password:
+        if password is None:
             return user
         if user.password == password:
             return user
+
+def insert_user_value(user_obj: User):
+    """
+    this function gets a user object and inserts it into
+    the users table
+    :param user_obj: the user object
+    :return:
+    """
+    serialized_user = pickle.dumps(user_obj)
+    run(command="""INSERT INTO users(user_obj)
+                    VALUES (?)""",
+        insertion_values=(serialized_user,))
 
 
 def initialize_db(db_instance=None):

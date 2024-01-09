@@ -431,10 +431,10 @@ class CreateUserMenu(BaseFrame):
                                   entries_config_dict=entries_dict,
                                   frame_args=f_args)
         self.is_admin = tk.IntVar()
-        self.is_admin_btn = \
+        is_admin_btn = \
             tk.Checkbutton(self.info_form, text='Is Admin?',
                        variable=self.is_admin, font=self.default_font)
-        self.is_admin_btn.pack()
+        is_admin_btn.pack()
 
         tk.Button(
             master=self.info_form,
@@ -442,6 +442,9 @@ class CreateUserMenu(BaseFrame):
             command=self.create_user,
             height=1, font=self.default_font, cursor='hand2'
         ).pack()
+        self.user_exists_label = \
+            tk.Label(self.info_form, text='Username already exists',
+                     fg='red', font=('', 12))
 
         self.widgets = {
             tk.Button(
@@ -462,9 +465,15 @@ class CreateUserMenu(BaseFrame):
 
         print(username, password, self.is_admin.get())
 
-        self.client_socket.send(UserEnum.CREATE_NEW_USER.encode())
-        # TODO: encrypt user
-        self.client_socket.send(username.encode())
+        new_user = User(username=username,
+                        password=password,
+                        is_admin=bool(self.is_admin.get()))
 
-        response = self.client_socket.recv(1024)
-        print(response)
+        self.client_socket.send(UserEnum.CREATE_NEW_USER.encode())
+        send_pickle_obj(new_user, self.client_socket)
+
+        response = self.client_socket.recv(1024).decode()
+        if response == UserEnum.INVALID_INFO:
+            self.user_exists_label.pack()
+        elif response == UserEnum.VALID_INFO:
+            print(2)
