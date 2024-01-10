@@ -2,9 +2,11 @@ import os.path
 from tkinter import messagebox
 from common import UserEnum, hash_text, User, FileEnum, \
     File, \
-    send_pickle_obj, recv_pickle_obj, UserEnum
+    send_pickle_obj, recv_pickle_obj, UserEnum, TFA
+from PIL import Image, ImageTk
 from abc import abstractmethod
 
+import common
 import tkinter as tk
 from tkinter import filedialog
 from typing import List, Dict, Optional, Union, Tuple, Any
@@ -112,8 +114,15 @@ class BaseForm(BaseFrame):
 class BaseMenu(BaseFrame):
     def __init__(self,
                  displayed_on: BaseWindow,
+                 add_back_btn=True,
                  frame_args: Optional=None):
         super().__init__(displayed_on, frame_args)
+        if add_back_btn:
+            tk.Button(
+                self,
+                text='Back',
+                font=self.default_font,
+                command=self.show_main_menu).pack()
 
     def hide_menu(self):
         self.pack_forget()
@@ -143,21 +152,14 @@ class MainWindow(BaseWindow):
         self.create_user_menu = CreateUserMenu(self,
                                                highlightbackground='blue',
                                                highlightthickness=2)
+        self.tfa_menu = TFAMenu(self,
+                                 highlightbackground='orange',
+                                 highlightthickness=2)
+
         if not is_skip_login:
             self.login_menu.pack()
         else:
             self.main_menu.pack()
-
-    def show_downloads_menu(self):
-        self.main_menu.pack_forget()
-        self.downloads_menu.file_listbox_frame.show_file_titles()
-        self.downloads_menu.pack(fill='x')
-    def show_main_menu(self, frame_to_hide: BaseFrame):
-        frame_to_hide.pack_forget()
-        self.main_menu.pack()
-    def show_create_user_menu(self):
-        self.main_menu.pack_forget()
-        self.create_user_menu.pack()
 
     def upload_file_to_db(self):
         """
@@ -285,6 +287,8 @@ class LoginMenu(BaseMenu):
         username = self.info_form.entries_dict['Username'].get()
         password = self.info_form.entries_dict['Password'].get()
 
+        print(username, password)
+
         for entry in self.info_form.entries_dict.values():
             entry.delete(0, tk.END)
 
@@ -312,6 +316,7 @@ class MainMenu(BaseMenu):
                  **frame_args):
 
         super().__init__(displayed_on=displayed_on,
+                         add_back_btn=False,
                          frame_args=frame_args)
         self.widgets = {
             tk.Button(self, text='Upload',
@@ -327,6 +332,11 @@ class MainMenu(BaseMenu):
                       command=lambda:
                       displayed_on.create_user_menu.show_menu(
                           to_hide=self)): {},
+            tk.Button(self, text='Show 2FA QR',
+                      font=self.default_font,
+                      command=lambda:
+                      displayed_on.tfa_menu.show_menu(
+                          to_hide=self)): {}
         }
         self.pack_widgets()
 
@@ -346,10 +356,10 @@ class DownloadsMenu(BaseMenu):
             tk.Label(self,
                      text='choose a file to download:',
                      font=self.default_font): {},
-            tk.Button(self,
-                      text='Back',
-                      font=self.default_font,
-                      command=self.show_main_menu): {},
+            # tk.Button(self,
+            #           text='Back',
+            #           font=self.default_font,
+            #           command=self.show_main_menu): {},
             self.file_listbox_frame: {'fill': 'x'},
             tk.Button(self,
                       text='↻',
@@ -466,20 +476,27 @@ class CreateUserMenu(BaseMenu):
             height=1, font=self.default_font, cursor='hand2'
         ).pack()
 
+        self.post_creation_frame = \
+            BaseFrame(self, {'highlightbackground': 'gray',
+                             'highlightthickness': 2})
+
         self.user_exists_label = \
-            tk.Label(self.info_form, text='Username already exists',
+            tk.Label(self.post_creation_frame,
+                     text='Username already exists',
                      fg='red', font=('', 12))
         self.created_successfully_label = \
-            tk.Label(self.info_form, text='Created Successfully',
+            tk.Label(self.post_creation_frame,
+                     text='Created Successfully',
                      fg='green', font=('', 12))
 
         self.widgets = {
-            tk.Button(
-                self,
-                text='Back',
-                font=self.default_font,
-                command=self.show_main_menu): {},
-            self.info_form: {}
+            # tk.Button(
+            #     self,
+            #     text='Back',
+            #     font=self.default_font,
+            #     command=self.show_main_menu): {},
+            self.info_form: {},
+            self.post_creation_frame: {}
         }
         self.pack_widgets()
 
@@ -506,6 +523,43 @@ class CreateUserMenu(BaseMenu):
 
         response = self.client_socket.recv(1024).decode()
         if response == UserEnum.INVALID_INFO:
+            self.created_successfully_label.pack_forget()
             self.user_exists_label.pack()
         elif response == UserEnum.VALID_INFO:
+            self.user_exists_label.pack_forget()
             self.created_successfully_label.pack()
+
+class TFAMenu(BaseMenu):
+    def __init__(self,
+                 displayed_on: MainWindow,
+                 **frame_args):
+        super().__init__(displayed_on, frame_args=frame_args)
+        self.tfa_obj: TFA = None
+        self.qr_label: tk.Label = None
+    def show_menu(self, to_hide: BaseMenu):
+        to_hide.hide_menu()
+
+        self.client_socket.send(UserEnum.REQUESTING_2FA_OBJECT.encode())
+        self.tfa_obj: TFA = recv_pickle_obj(self.client_socket)
+
+        img_path = cur_dir + r'\img.png'
+        with open(img_path, 'wb') as f:
+            f.write(self.tfa_obj.qr_img)
+
+        # TODO: y no work
+        try:
+            image = Image.open(img_path)
+            print(image)
+            qr_photo = ImageTk.PhotoImage(image)
+            print(qr_photo)
+            #os.remove(img_path)
+            self.qr_label = tk.Label(self, image=qr_photo, highlightbackground='blue',
+                                     font=self.default_font)
+            self.qr_label.pack()
+        except Exception as e:
+            print('fuck me')
+            print(e)
+
+
+
+

@@ -52,6 +52,9 @@ def receive_msg(client):
             elif msg == UserEnum.CREATE_NEW_USER:
                 create_new_user(client)
 
+            elif msg == UserEnum.REQUESTING_2FA_OBJECT:
+                send_tfa_object(client)
+
         except ConnectionResetError:
             # Handle client disconnection
             print(f'Client {clients[client]} disconnected.')
@@ -63,6 +66,7 @@ def check_login(client):
 
     login_try: User = recv_pickle_obj(client)
     user: User = pull_user_value(login_try.username, login_try.password)
+    print(login_try)
     if user:
         client.send(UserEnum.VALID_INFO.encode())
         send_pickle_obj(user, client)
@@ -118,6 +122,10 @@ def create_new_user(client):
     from handle_db import insert_user_value
     insert_user_value(new_user)
 
+def send_tfa_object(client):
+    from handle_db import pull_tfa_obj
+    tfa_obj = pull_tfa_obj()
+    send_pickle_obj(tfa_obj, client)
 
 
 if __name__ == '__main__':

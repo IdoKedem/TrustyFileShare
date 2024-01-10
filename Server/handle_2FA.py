@@ -21,7 +21,7 @@ def generate_new_key() -> str:
     return encrypted_key
 
 
-def generate_qr_img(totp) -> str:
+def generate_qr_img(totp) -> bytes:
     totp_uri = totp.provisioning_uri(
         name='user@example.com',
         issuer_name='TFS')
@@ -34,7 +34,7 @@ def generate_qr_img(totp) -> str:
     # TODO: remove qr img from server
     #os.remove('img.png')
 
-    return encrypt(img).hex()
+    return img
 
 def create_new_otp():
     """
@@ -42,7 +42,7 @@ def create_new_otp():
     :return:
     """
     key = generate_new_key()
-    img = generate_qr_img(get_totp(key))
+    img: bytes = generate_qr_img(get_totp(key))
     tfa_obj = TFA(key=key, qr_img=img)
 
     handle_db.insert_tfa_data(tfa_obj=tfa_obj)

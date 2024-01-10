@@ -13,6 +13,7 @@ class SocketEnum:
 class UserEnum:
     SENDING_LOGIN_INFO = 'Sending Login Info!'
     SENDING_TOTP_TOKEN = 'Sending TOTP Token!'
+    REQUESTING_2FA_OBJECT = 'Sending 2FA Object!'
 
     CREATE_NEW_USER = 'Create New User!'
 
@@ -44,7 +45,7 @@ class FileEnum:
     FILE_ACCEPTED = 'File Accepted!'
 
 
-
+#TODO: encrypt
 def send_pickle_obj(obj, client_socket):
     serialized_obj: bytes = pickle.dumps(obj)
     obj_size = len(serialized_obj)
@@ -53,6 +54,7 @@ def send_pickle_obj(obj, client_socket):
     time.sleep(0.1)
     client_socket.send(serialized_obj)
 
+# TODO: decrypt
 def recv_pickle_obj(client_socket):
     obj_size = int(client_socket.recv(1024).decode())
 
@@ -86,19 +88,18 @@ class File:
 
 
 class TFA:
-    def __init__(self, key: str, qr_img: str):
-        ## key and img are encrypted
-        self.key = key
-        self.qr_img = qr_img
+    def __init__(self, key: str, qr_img: bytes):
+        self.key = key   # encrypted
+        self.qr_img = qr_img # not encrypted
 
 
 
 # TODO: REMOVE!!!! IMPORT FROM EXISTING
-def encrypt(plain_key: bytes) -> bytes:
+def encrypt(plain: bytes) -> bytes:
     shift = 3
-    midpoint = len(plain_key) // 2
-    mixed_plain = plain_key[midpoint:] + \
-                plain_key[:midpoint]
+    midpoint = len(plain) // 2
+    mixed_plain = plain[midpoint:] + \
+                  plain[:midpoint]
 
     encrypted = b''
     for char in mixed_plain:
@@ -106,15 +107,15 @@ def encrypt(plain_key: bytes) -> bytes:
 
     return encrypted
 
-def decrypt(cipher_key: bytes) -> bytes:
+def decrypt(cipher: bytes) -> bytes:
     shift = 3
-    mixed_cipher_key = b''
-    for char in cipher_key:
-        mixed_cipher_key += (chr(char - shift)).encode()
+    mixed_cipher = b''
+    for char in cipher:
+        mixed_cipher += (chr(char - shift)).encode()
 
-    midpoint = len(mixed_cipher_key) // 2
-    decrypted_utf8 = mixed_cipher_key[midpoint:] + \
-                     mixed_cipher_key[:midpoint]
+    midpoint = len(mixed_cipher) // 2
+    decrypted_utf8 = mixed_cipher[midpoint:] + \
+                     mixed_cipher[:midpoint]
 
     return decrypted_utf8
 

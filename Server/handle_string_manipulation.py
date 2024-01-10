@@ -27,6 +27,7 @@ def decrypt(cipher_key: bytes, shift=shift) -> bytes:
     return decrypted_utf8
 
 
+# TODO: access through db
 def get_banned_words():
     with open(cur_dir + r'\banned_words.txt', 'rb') as f:
         banned_words = f.read().replace(b'\r' ,b'').split(b'\n')
