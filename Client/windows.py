@@ -142,13 +142,19 @@ class MainWindow(BaseWindow):
 
         self.login_menu = LoginMenu(self)
 
+        if not is_skip_login:
+            self.login_menu.pack()
+            return
+
         self.main_menu = MainMenu(self,
-                                   highlightbackground='blue',
-                                   highlightthickness=2)
+                                  logged_user=self.user,
+                                  highlightbackground='blue',
+                                  highlightthickness=2)
 
         self.downloads_menu = DownloadsMenu(self,
                                              highlightbackground='green',
                                              highlightthickness=2)
+
         self.create_user_menu = CreateUserMenu(self,
                                                highlightbackground='blue',
                                                highlightthickness=2)
@@ -156,10 +162,7 @@ class MainWindow(BaseWindow):
                                  highlightbackground='orange',
                                  highlightthickness=2)
 
-        if not is_skip_login:
-            self.login_menu.pack()
-        else:
-            self.main_menu.pack()
+        self.main_menu.pack()
 
     def upload_file_to_db(self):
         """
@@ -313,12 +316,18 @@ class LoginMenu(BaseMenu):
 class MainMenu(BaseMenu):
     def __init__(self,
                  displayed_on: MainWindow,
+                 logged_user: User,
                  **frame_args):
 
         super().__init__(displayed_on=displayed_on,
                          add_back_btn=False,
                          frame_args=frame_args)
-        self.widgets = {
+
+        self.user_widgets = {
+            tk.Label(self,
+                     text='Hello ' + logged_user.get_plain_username(),
+                     font=self.default_font): {},
+
             tk.Button(self, text='Upload',
                       command=displayed_on.upload_file_to_db,
                       font=self.default_font): {},
@@ -326,7 +335,10 @@ class MainMenu(BaseMenu):
                       font=self.default_font,
                       command=lambda:
                       displayed_on.downloads_menu.show_menu(
-                          to_hide=self)): {},
+                          to_hide=self)): {}
+        }
+
+        self.admin_widgets = {
             tk.Button(self, text='Create User',
                       font=self.default_font,
                       command=lambda:
@@ -336,8 +348,12 @@ class MainMenu(BaseMenu):
                       font=self.default_font,
                       command=lambda:
                       displayed_on.tfa_menu.show_menu(
-                          to_hide=self)): {}
-        }
+                          to_hide=self)): {}}
+
+        self.widgets = {**self.user_widgets}
+        if logged_user.is_admin:
+            self.widgets = {**self.user_widgets, **self.admin_widgets}
+
         self.pack_widgets()
 
 
@@ -492,11 +508,6 @@ class CreateUserMenu(BaseMenu):
                      fg='green', font=('', 12))
 
         self.widgets = {
-            # tk.Button(
-            #     self,
-            #     text='Back',
-            #     font=self.default_font,
-            #     command=self.show_main_menu): {},
             self.info_form: {},
             self.post_creation_frame: {}
         }

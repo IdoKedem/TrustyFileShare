@@ -70,8 +70,8 @@ class User:
         self.password = hash_text(password)
         self.is_admin = is_admin
 
-    def get_login_info(self):
-        return self.username, self.password
+    def get_plain_username(self):
+        return decrypt(self.username).decode()
     def __str__(self):
         return \
             f'Username: {self.username}\nPassword: {self.password}'
