@@ -3,6 +3,7 @@ from datetime import datetime
 import pickle
 from hashlib import md5
 import time
+import math
 
 
 
@@ -97,7 +98,7 @@ class TFA:
 # TODO: REMOVE!!!! IMPORT FROM EXISTING
 def encrypt(plain: bytes) -> bytes:
     shift = 3
-    midpoint = len(plain) // 2
+    midpoint = len(plain) // 2   # floor
     mixed_plain = plain[midpoint:] + \
                   plain[:midpoint]
 
@@ -113,7 +114,7 @@ def decrypt(cipher: bytes) -> bytes:
     for char in cipher:
         mixed_cipher += (chr(char - shift)).encode()
 
-    midpoint = len(mixed_cipher) // 2
+    midpoint = math.ceil(len(mixed_cipher) / 2)
     decrypted_utf8 = mixed_cipher[midpoint:] + \
                      mixed_cipher[:midpoint]
 

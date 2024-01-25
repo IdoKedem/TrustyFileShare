@@ -432,8 +432,10 @@ class FileListboxFrame(BaseFrame):
         all_files: List[File] = recv_pickle_obj(self.client_socket)
 
         for ind, file in enumerate(all_files):
+            decrypted_username = \
+                common.decrypt(file.uploading_user.username)
             formatted_row = \
-                f'{ind + 1}. {file.name} ({file.uploading_user.username},' \
+                f'{ind + 1}. {file.name} ({decrypted_username},' \
                 f' {file.upload_time})'
             self.listbox.insert(tk.END, formatted_row)
 
