@@ -536,6 +536,9 @@ class TFAMenu(BaseMenu):
         super().__init__(displayed_on, frame_args=frame_args)
         self.tfa_obj: TFA = None
         self.qr_label: tk.Label = None
+
+        self.qr_photo = None
+
     def show_menu(self, to_hide: BaseMenu):
         to_hide.hide_menu()
 
@@ -546,20 +549,12 @@ class TFAMenu(BaseMenu):
         with open(img_path, 'wb') as f:
             f.write(self.tfa_obj.qr_img)
 
-        # TODO: y no work
-        try:
-            image = Image.open(img_path)
-            print(image)
-            qr_photo = ImageTk.PhotoImage(image)
-            print(qr_photo)
-            #os.remove(img_path)
-            self.qr_label = tk.Label(self, image=qr_photo, highlightbackground='blue',
-                                     font=self.default_font)
-            self.qr_label.pack()
-        except Exception as e:
-            print('fuck me')
-            print(e)
+        image = Image.open(img_path)
+        self.qr_photo = ImageTk.PhotoImage(image)
 
+        self.qr_label = tk.Label(self, image=self.qr_photo, highlightbackground='blue')
+        self.qr_label.pack()
 
+        self.pack()
 
 
