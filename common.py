@@ -46,10 +46,9 @@ class FileEnum:
     FILE_ACCEPTED = 'File Accepted!'
 
 
-#TODO: encrypt
 def send_pickle_obj(obj, client_socket):
     serialized_obj_encrypted: bytes = \
-        encrypt_pickle(pickle.dumps(obj))
+        encrypt(pickle.dumps(obj))
     obj_size = len(serialized_obj_encrypted)
 
     print('sending:', serialized_obj_encrypted)
@@ -58,12 +57,11 @@ def send_pickle_obj(obj, client_socket):
     time.sleep(0.1)
     client_socket.send(serialized_obj_encrypted)
 
-# TODO: decrypt
 def recv_pickle_obj(client_socket):
     obj_size = int(client_socket.recv(1024).decode())
 
     serialized_obj_decrypted = \
-        decrypt_pickle(client_socket.recv(1024 + obj_size))
+        decrypt(client_socket.recv(1024 + obj_size))
     print('got:', serialized_obj_decrypted)
 
     return pickle.loads(serialized_obj_decrypted)
