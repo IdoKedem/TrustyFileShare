@@ -147,20 +147,12 @@ class MainWindow(BaseWindow):
             return
 
         self.main_menu = MainMenu(self,
-                                  logged_user=self.user,
-                                  highlightbackground='blue',
-                                  highlightthickness=2)
+                                  logged_user=self.user)
 
-        self.downloads_menu = DownloadsMenu(self,
-                                             highlightbackground='green',
-                                             highlightthickness=2)
+        self.downloads_menu = DownloadsMenu(self)
 
-        self.create_user_menu = CreateUserMenu(self,
-                                               highlightbackground='blue',
-                                               highlightthickness=2)
-        self.tfa_menu = TFAMenu(self,
-                                 highlightbackground='orange',
-                                 highlightthickness=2)
+        self.create_user_menu = CreateUserMenu(self)
+        self.tfa_menu = TFAMenu(self)
 
         self.main_menu.pack()
 
@@ -244,8 +236,6 @@ class LoginMenu(BaseMenu):
                          frame_args=frame_args)
         f_args = \
             {
-               'highlightbackground': 'green',
-               'highlightthickness': 2
             }
         entries_dict = {
             'Username': {'frame_args': {'width': '400',
@@ -364,12 +354,10 @@ class DownloadsMenu(BaseMenu):
     def __init__(self,
                  displayed_on: MainWindow,
                  **frame_args):
-        super().__init__(displayed_on, frame_args)
+        super().__init__(displayed_on, frame_args=frame_args)
 
         self.file_listbox_frame = \
-            FileListboxFrame(displayed_on=self,
-                             highlightbackground='magenta',
-                             highlightthickness=2)
+            FileListboxFrame(displayed_on=self)
 
         self.widgets = {
             tk.Label(self,
@@ -463,12 +451,10 @@ class CreateUserMenu(BaseMenu):
     def __init__(self,
                  displayed_on: MainWindow,
                  **frame_args):
-        super().__init__(displayed_on, frame_args)
+        super().__init__(displayed_on, frame_args=frame_args)
 
         f_args = \
             {
-               'highlightbackground': 'pink',
-               'highlightthickness': 2
                }
 
         entries_dict = {
@@ -498,8 +484,7 @@ class CreateUserMenu(BaseMenu):
         ).pack()
 
         self.post_creation_frame = \
-            BaseFrame(self, {'highlightbackground': 'gray',
-                             'highlightthickness': 2})
+            BaseFrame(self, {})
 
         self.user_exists_label = \
             tk.Label(self.post_creation_frame,
@@ -568,7 +553,7 @@ class TFAMenu(BaseMenu):
         image = Image.open(img_path)
         self.qr_photo = ImageTk.PhotoImage(image)
 
-        self.qr_label = tk.Label(self, image=self.qr_photo, highlightbackground='blue')
+        self.qr_label = tk.Label(self, image=self.qr_photo)
         self.qr_label.pack()
 
         self.pack()
