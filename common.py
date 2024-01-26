@@ -51,7 +51,6 @@ def send_pickle_obj(obj, client_socket):
         encrypt(pickle.dumps(obj))
     obj_size = len(serialized_obj_encrypted)
 
-    print('sending:', serialized_obj_encrypted)
 
     client_socket.send(str(obj_size).encode())
     time.sleep(0.1)
@@ -62,7 +61,6 @@ def recv_pickle_obj(client_socket):
 
     serialized_obj_decrypted = \
         decrypt(client_socket.recv(1024 + obj_size))
-    print('got:', serialized_obj_decrypted)
 
     return pickle.loads(serialized_obj_decrypted)
 
