@@ -24,7 +24,7 @@ class BaseWindow(tk.Tk):
     A base class for all windows
     """
     def __init__(self, title: str, client_socket: socket.socket,
-                 width: int=800, height: int=800):
+                 width: int=600, height: int=600):
         super().__init__()
         self.geometry(f'{width}x{height}')
         self.resizable(False, False)
@@ -315,39 +315,51 @@ class MainMenu(BaseMenu):
         super().__init__(displayed_on=displayed_on,
                          add_back_btn=False,
                          frame_args=frame_args)
-
-        self.user_widgets = {
+        self.widgets = {
             tk.Label(self,
                      text='Hello ' + logged_user.get_plain_username(),
-                     font=self.default_font): {},
+                     font=self.default_font): {}
+        }
 
+        self.user_widgets_frame = BaseFrame(self)
+        self.add_user_accessible_widgets()
+
+        self.widgets.update(self.user_widgets_frame.widgets)
+
+        if logged_user.is_admin:
+            self.admin_widgets_frame = BaseFrame(self)
+            self.add_admin_accessible_widgets()
+
+            self.widgets.update(self.admin_widgets_frame.widgets)
+
+        self.pack_widgets()
+
+    def add_user_accessible_widgets(self):
+        self.user_widgets_frame.widgets = {
             tk.Button(self, text='Upload',
-                      command=displayed_on.upload_file_to_db,
+                      command=self.displayed_on.upload_file_to_db,
                       font=self.default_font): {},
             tk.Button(self, text='Download',
                       font=self.default_font,
                       command=lambda:
-                      displayed_on.downloads_menu.show_menu(
+                      self.displayed_on.downloads_menu.show_menu(
                           to_hide=self)): {}
         }
+        self.user_widgets_frame.pack()
 
-        self.admin_widgets = {
+    def add_admin_accessible_widgets(self):
+        self.admin_widgets_frame.widgets = {
             tk.Button(self, text='Create User',
                       font=self.default_font,
                       command=lambda:
-                      displayed_on.create_user_menu.show_menu(
+                      self.displayed_on.create_user_menu.show_menu(
                           to_hide=self)): {},
             tk.Button(self, text='Show 2FA QR',
                       font=self.default_font,
                       command=lambda:
-                      displayed_on.tfa_menu.show_menu(
+                      self.displayed_on.tfa_menu.show_menu(
                           to_hide=self)): {}}
-
-        self.widgets = {**self.user_widgets}
-        if logged_user.is_admin:
-            self.widgets = {**self.user_widgets, **self.admin_widgets}
-
-        self.pack_widgets()
+        self.admin_widgets_frame.pack()
 
 
 class DownloadsMenu(BaseMenu):
