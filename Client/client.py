@@ -13,8 +13,7 @@ if __name__ == '__main__':
     client_socket = connect_to_server()
 
     MainWindow(client_socket=client_socket,
-              logged_user=common.users[1],
-               is_skip_login=True).mainloop()
+               is_skip_login=False).mainloop()
 
 
 

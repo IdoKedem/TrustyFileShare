@@ -66,7 +66,6 @@ def check_login(client):
 
     login_try: User = recv_pickle_obj(client)
     user: User = pull_user_value(login_try.username, login_try.password)
-    print(login_try)
     if user:
         client.send(UserEnum.VALID_INFO.encode())
         send_pickle_obj(user, client)

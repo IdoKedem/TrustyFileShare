@@ -297,8 +297,6 @@ class LoginMenu(BaseMenu):
         username = self.info_form.entries_dict['Username'].get()
         password = self.info_form.entries_dict['Password'].get()
 
-        print(username, password)
-
         for entry in self.info_form.entries_dict.values():
             entry.delete(0, tk.END)
 
@@ -546,7 +544,6 @@ class CreateUserMenu(BaseMenu):
         for entry in self.info_form.entries_dict.values():
             entry.delete(0, tk.END)
 
-        print(username, password, self.is_admin.get())
 
         new_user = User(username=username,
                         password=password,
