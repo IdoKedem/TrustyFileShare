@@ -162,11 +162,15 @@ class MainWindow(BaseWindow):
         selected file to the db
         :return:
         """
-        file_path = filedialog.askopenfilename(
-            title='Select a file to upload',
-            filetypes=FileEnum.SUPPORTED_FILE_TYPES)
-        with open(file_path, 'rb') as file:
-            file_content = file.read()
+        try:
+            file_path = filedialog.askopenfilename(
+                title='Select a file to upload',
+                filetypes=FileEnum.SUPPORTED_FILE_TYPES)
+            with open(file_path, 'rb') as file:
+                file_content = file.read()
+        except FileNotFoundError:
+            file_content = ''
+
         if not file_content:
             messagebox.showerror(title='Error',
                                  message='Unable to upload an empty file')
@@ -184,6 +188,9 @@ class MainWindow(BaseWindow):
         if file_status == FileEnum.FILE_REJECTED.encode():
             messagebox.showerror(title='BANNED WORDS DETECTED',
                                  message='SYSTEM CENSORED BANNED WORDS')
+        else:
+            messagebox.showinfo(title='Success',
+                                message='Successfully uploaded')
 
 
 class TFADialog(tk.Toplevel):
@@ -205,6 +212,11 @@ class TFADialog(tk.Toplevel):
         tk.Button(self, text='Submit',
                   command=self.verify_totp_token,
                   font=self.default_font, cursor='hand2').pack()
+
+        self.try_again_label = \
+            tk.Label(self, text='Try Again',
+                     fg='red', font=('', 12))
+
     def on_close(self):
         self.parent.deiconify()
         self.destroy()
@@ -224,6 +236,8 @@ class TFADialog(tk.Toplevel):
             MainWindow(client_socket=self.client_socket,
                        logged_user=self.user,
                        is_skip_login=True).mainloop()
+        else:
+            self.try_again_label.pack()
 
 #TODO: fix banned words
 
@@ -373,12 +387,8 @@ class DownloadsMenu(BaseMenu):
 
         self.widgets = {
             tk.Label(self,
-                     text='choose a file to download:',
+                     text='Choose a file to download:',
                      font=self.default_font): {},
-            # tk.Button(self,
-            #           text='Back',
-            #           font=self.default_font,
-            #           command=self.show_main_menu): {},
             self.file_listbox_frame: {'fill': 'x'},
             tk.Button(self,
                       text='↻',
@@ -404,6 +414,11 @@ class DownloadsMenu(BaseMenu):
         request a file object from the server and saves it locally
         :return:
         """
+        if not self.file_listbox_frame.listbox.curselection():  # no file selected
+            messagebox.showerror(title='Error',
+                                 message='Please select a file')
+            return
+
         requested_file_ind: int = self.file_listbox_frame.listbox.curselection()[0] + 1
         self.client_socket.send(FileEnum.REQUESTING_FILE_DATA.encode())
         self.client_socket.send(str(requested_file_ind).encode())
@@ -414,7 +429,8 @@ class DownloadsMenu(BaseMenu):
             os.mkdir(cur_dir + r'\Downloads')
         with open(cur_dir + rf'\Downloads\{file.name}', 'wb') as f:
             f.write(file.content)
-
+        messagebox.showinfo(title='Success',
+                            message='Successfully Downloaded')
 
 class FileListboxFrame(BaseFrame):
     def __init__(self,
@@ -425,17 +441,25 @@ class FileListboxFrame(BaseFrame):
         self.client_socket = \
             self.displayed_on.displayed_on.client_socket
 
-        self.scrollbar = tk.Scrollbar(self)
+        self.x_scrollbar = tk.Scrollbar(self, orient='horizontal')
+        self.y_scrollbar = tk.Scrollbar(self, orient='vertical')
         self.listbox = tk.Listbox(self,
                        selectmode='single',
-                       yscrollcommand=self.scrollbar.set,
+                       xscrollcommand=self.x_scrollbar.set,
+                       yscrollcommand=self.y_scrollbar.set,
                        font=self.default_font)
 
         self.widgets = {
-            self.scrollbar: {'side': 'right',
+            self.x_scrollbar: {'side': 'bottom',
+                               'fill': 'x'},
+            self.y_scrollbar: {'side': 'right',
                              'fill': 'y'},
             self.listbox: {'fill': 'x'}
         }
+
+        self.x_scrollbar.config(command=self.listbox.xview)
+        self.y_scrollbar.config(command=self.listbox.yview)
+
         self.pack_widgets()
 
     def show_file_titles(self):
@@ -498,14 +522,6 @@ class CreateUserMenu(BaseMenu):
         self.post_creation_frame = \
             BaseFrame(self, {})
 
-        self.user_exists_label = \
-            tk.Label(self.post_creation_frame,
-                     text='Username already exists',
-                     fg='red', font=('', 12))
-        self.created_successfully_label = \
-            tk.Label(self.post_creation_frame,
-                     text='Created Successfully',
-                     fg='green', font=('', 12))
 
         self.widgets = {
             self.info_form: {},
@@ -513,14 +529,19 @@ class CreateUserMenu(BaseMenu):
         }
         self.pack_widgets()
 
-    def hide_menu(self):
-        self.user_exists_label.pack_forget()
-        self.created_successfully_label.pack_forget()
-        self.pack_forget()
 
     def create_user(self):
         username = self.info_form.entries_dict['Username'].get()
         password = self.info_form.entries_dict['Password'].get()
+
+        if not username:
+            messagebox.showerror(title='Error',
+                                 message='Must fill in username')
+            return
+        if not password:
+            messagebox.showerror(title='Error',
+                                 message='Must fill in password')
+            return
 
         for entry in self.info_form.entries_dict.values():
             entry.delete(0, tk.END)
@@ -536,11 +557,11 @@ class CreateUserMenu(BaseMenu):
 
         response = self.client_socket.recv(1024).decode()
         if response == UserEnum.INVALID_INFO:
-            self.created_successfully_label.pack_forget()
-            self.user_exists_label.pack()
+            messagebox.showerror(title='Error',
+                                 message='Username already exists')
         elif response == UserEnum.VALID_INFO:
-            self.user_exists_label.pack_forget()
-            self.created_successfully_label.pack()
+            messagebox.showinfo(title='Success',
+                                message='User created successfully')
 
 class TFAMenu(BaseMenu):
     def __init__(self,
