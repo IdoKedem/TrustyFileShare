@@ -91,7 +91,7 @@ class File:
 class TFA:
     def __init__(self, key: str, qr_img: bytes):
         self.key = key   # encrypted
-        self.qr_img = qr_img # not encrypted
+        self.qr_img: bytes = qr_img # not encrypted
 
 
 

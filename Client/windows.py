@@ -449,7 +449,7 @@ class FileListboxFrame(BaseFrame):
 
         for ind, file in enumerate(all_files):
             decrypted_username = \
-                common.decrypt(file.uploading_user.username)
+                common.decrypt(file.uploading_user.username).decode()
             formatted_row = \
                 f'{ind + 1}. {file.name} ({decrypted_username},' \
                 f' {file.upload_time})'
