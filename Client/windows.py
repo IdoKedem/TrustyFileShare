@@ -238,6 +238,7 @@ class LoginMenu(BaseMenu):
                  displayed_on: MainWindow,
                  **frame_args):
         super().__init__(displayed_on=displayed_on,
+                         add_back_btn=False,
                          frame_args=frame_args)
         f_args = \
             {
