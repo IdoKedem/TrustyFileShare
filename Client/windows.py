@@ -233,6 +233,8 @@ class TFADialog(tk.Toplevel):
                        logged_user=self.user,
                        is_skip_login=True).mainloop()
 
+#TODO: fix banned words
+
 class LoginMenu(BaseMenu):
     def __init__(self,
                  displayed_on: MainWindow,
