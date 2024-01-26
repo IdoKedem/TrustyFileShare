@@ -48,19 +48,25 @@ class FileEnum:
 
 #TODO: encrypt
 def send_pickle_obj(obj, client_socket):
-    serialized_obj: bytes = pickle.dumps(obj)
-    obj_size = len(serialized_obj)
+    serialized_obj_encrypted: bytes = \
+        encrypt_pickle(pickle.dumps(obj))
+    obj_size = len(serialized_obj_encrypted)
+
+    print('sending:', serialized_obj_encrypted)
 
     client_socket.send(str(obj_size).encode())
     time.sleep(0.1)
-    client_socket.send(serialized_obj)
+    client_socket.send(serialized_obj_encrypted)
 
 # TODO: decrypt
 def recv_pickle_obj(client_socket):
     obj_size = int(client_socket.recv(1024).decode())
 
-    serialized_obj = client_socket.recv(1024 + obj_size)
-    return pickle.loads(serialized_obj)
+    serialized_obj_decrypted = \
+        decrypt_pickle(client_socket.recv(1024 + obj_size))
+    print('got:', serialized_obj_decrypted)
+
+    return pickle.loads(serialized_obj_decrypted)
 
 
 class User:
@@ -95,7 +101,6 @@ class TFA:
 
 
 
-# TODO: REMOVE!!!! IMPORT FROM EXISTING
 def encrypt(plain: bytes) -> bytes:
     shift = 3
     midpoint = len(plain) // 2   # floor
@@ -104,7 +109,7 @@ def encrypt(plain: bytes) -> bytes:
 
     encrypted = b''
     for char in mixed_plain:
-        encrypted += chr(char + shift).encode()
+        encrypted += bytes.fromhex(format(char + shift, 'x').zfill(2))
 
     return encrypted
 
@@ -112,7 +117,7 @@ def decrypt(cipher: bytes) -> bytes:
     shift = 3
     mixed_cipher = b''
     for char in cipher:
-        mixed_cipher += (chr(char - shift)).encode()
+        mixed_cipher += bytes.fromhex(format(char - shift, 'x').zfill(2))
 
     midpoint = math.ceil(len(mixed_cipher) / 2)
     decrypted_utf8 = mixed_cipher[midpoint:] + \
@@ -122,7 +127,6 @@ def decrypt(cipher: bytes) -> bytes:
 
 def hash_text(text):
     return md5(text.encode()).hexdigest()
-# TODO: REMOVE!!!! IMPORT FROM EXISTING
 
 
 users = \
