@@ -558,4 +558,8 @@ class TFAMenu(BaseMenu):
 
         self.pack()
 
+    def hide_menu(self):
+        self.qr_label.pack_forget()
+        self.pack_forget()
+
 
