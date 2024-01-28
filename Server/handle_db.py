@@ -1,8 +1,7 @@
 import sqlite3
 from datetime import datetime
 import common
-from common import File, TFA, User
-from handle_string_manipulation import encrypt
+from common import File, TFA, User, BannedWords, encrypt
 from typing import Tuple, Optional, Dict, List, Any, Union
 import os
 import pickle
@@ -115,6 +114,15 @@ def initialize_db(db_instance=None):
         tfa_object = TFA(key=key, qr_img=img)
         insert_tfa_data(tfa_object)
 
+    run("""CREATE TABLE IF NOT EXISTS BANNED_WORDS(
+            banned_words_obj BLOB)""",
+        db_instance=db_instance)
+
+    if os.path.exists('banned_words.txt'):
+        obj = BannedWords('banned_words.txt')
+        insert_banned_words_obj(obj)
+
+
 def add_file_to_db(file_obj: File):
     """
     inserts a file object data to the db
@@ -184,6 +192,29 @@ def pull_tfa_obj(db_instance: DataBase=None) -> TFA:
 
     db_instance.close()
     return tfa_obj
+
+def insert_banned_words_obj(banned_words_obj: BannedWords):
+    serialized_obj = pickle.dumps(banned_words_obj)
+    run(command="""INSERT INTO BANNED_WORDS(banned_words_obj)
+                    VALUES(?)""",
+        insertion_values=(sqlite3.Binary(serialized_obj),))
+
+def pull_banned_words_obj(db_instance: DataBase=None) -> BannedWords:
+    """
+    pulls the (only) banned_words object from the db
+    :param db_instance:
+    :return:
+    """
+    if not db_instance:
+        db_instance = DataBase(db_name)
+
+    db_instance.cursor.execute('SELECT banned_words_obj FROM BANNED_WORDS')
+    banned_words_data: Tuple[TFA, None] = db_instance.cursor.fetchone()
+    banned_words = pickle.loads(banned_words_data[0])
+
+    db_instance.close()
+    return banned_words
+
 
 if __name__ == '__main__':
     db_instance = DataBase(db_name)

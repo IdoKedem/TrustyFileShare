@@ -94,6 +94,7 @@ def receive_file_data(client):
         client.send(FileEnum.FILE_ACCEPTED.encode())
     else:
         client.send(FileEnum.FILE_REJECTED.encode())
+        file.content = censored_content
 
     from handle_db import add_file_to_db
     add_file_to_db(file_obj=file)

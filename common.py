@@ -39,7 +39,7 @@ class FileEnum:
     ]
 
     FILE_EXTENSION_TO_CENSOR = [
-        b'.txt'
+        '.txt'
     ]
 
     FILE_REJECTED = 'File rejected'
@@ -90,9 +90,15 @@ class File:
 
 
 class TFA:
-    def __init__(self, key: str, qr_img: bytes):
+    def __init__(self, key: str, qr_img):
         self.key = key   # encrypted
         self.qr_img: bytes = qr_img # not encrypted
+
+class BannedWords:
+    def __init__(self, path_to_words):
+        with open(path_to_words, 'rb') as f:
+            self.banned_words = \
+                f.read().replace(b'\r', b'').split(b'\n')
 
 
 

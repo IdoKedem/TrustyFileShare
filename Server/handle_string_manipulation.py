@@ -1,8 +1,13 @@
 from hashlib import md5
+from handle_db import pull_banned_words_obj
+from typing import List
 import os
 
-cur_dir = os.path.join(os.getcwd(),
-                       r'TrustyFileShare\Server')
+cur_dir = os.path.join(os.getcwd())
+if os.path.basename(cur_dir) != 'Server':
+    cur_dir = os.path.join(cur_dir, 'Server')
+
+
 shift = 3
 def encrypt(plain_key: bytes, shift=shift) -> bytes:
     midpoint = len(plain_key) // 2
@@ -28,17 +33,16 @@ def decrypt(cipher_key: bytes, shift=shift) -> bytes:
 
 
 # TODO: access through db
-def get_banned_words():
-    with open(cur_dir + r'\banned_words.txt', 'rb') as f:
-        banned_words = f.read().replace(b'\r' ,b'').split(b'\n')
-    return banned_words
+def get_banned_words() -> List[bytes]:
+    return pull_banned_words_obj().banned_words
 
 def censor_string_words(input_string):
     censored_string = input_string
     banned_words = get_banned_words()
 
     for word in banned_words:
-        censored_string = censored_string.replace(word, b'*' * len(word))
+        if word in censored_string:
+            censored_string = censored_string.replace(word, b'*' * len(word))
     return censored_string
 
 def hash_text(text):
