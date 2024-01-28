@@ -14,10 +14,6 @@ def generate_new_key() -> str:
     secret_key = pyotp.random_base32()
     encrypted_key = encrypt(secret_key.encode()).hex()
 
-    # TODO: REMOVE
-    with open('key.txt', 'w') as f:
-        f.write(encrypted_key)
-
     return encrypted_key
 
 
@@ -27,12 +23,10 @@ def generate_qr_img(totp) -> bytes:
         issuer_name='TFS')
     qrcode.make(totp_uri).save('img.png')
 
-    #TODO: ENCRYPT IMG BEFORE WRITING
     with open('img.png', 'rb') as f:
         img = f.read()
 
-    # TODO: remove qr img from server
-    #os.remove('img.png')
+    os.remove('img.png')
 
     return img
 
@@ -49,11 +43,8 @@ def create_new_otp():
 
 
 def is_token_valid(user_input_token):
-    #TODO: remove testing token
-
     totp = get_totp()
-    return totp.verify(user_input_token) \
-           or user_input_token == '69'
+    return totp.verify(user_input_token)
 
 def get_totp(key: Optional[str]=None):
     """

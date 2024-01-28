@@ -46,21 +46,23 @@ class FileEnum:
     FILE_ACCEPTED = 'File Accepted!'
 
 
-#TODO: encrypt
 def send_pickle_obj(obj, client_socket):
-    serialized_obj: bytes = pickle.dumps(obj)
-    obj_size = len(serialized_obj)
+    serialized_obj_encrypted: bytes = \
+        encrypt(pickle.dumps(obj))
+    obj_size = len(serialized_obj_encrypted)
+
 
     client_socket.send(str(obj_size).encode())
     time.sleep(0.1)
-    client_socket.send(serialized_obj)
+    client_socket.send(serialized_obj_encrypted)
 
-# TODO: decrypt
 def recv_pickle_obj(client_socket):
     obj_size = int(client_socket.recv(1024).decode())
 
-    serialized_obj = client_socket.recv(1024 + obj_size)
-    return pickle.loads(serialized_obj)
+    serialized_obj_decrypted = \
+        decrypt(client_socket.recv(1024 + obj_size))
+
+    return pickle.loads(serialized_obj_decrypted)
 
 
 class User:
@@ -95,7 +97,6 @@ class TFA:
 
 
 
-# TODO: REMOVE!!!! IMPORT FROM EXISTING
 def encrypt(plain: bytes) -> bytes:
     shift = 3
     midpoint = len(plain) // 2   # floor
@@ -122,7 +123,6 @@ def decrypt(cipher: bytes) -> bytes:
 
 def hash_text(text):
     return md5(text.encode()).hexdigest()
-# TODO: REMOVE!!!! IMPORT FROM EXISTING
 
 
 users = \

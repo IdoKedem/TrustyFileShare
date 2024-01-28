@@ -57,15 +57,11 @@ def pull_user_value(username, password: Optional[str]=None,
     db_instance.cursor.execute("SELECT user_obj FROM users")
 
     users_data: List[Tuple[bytes]] = db_instance.cursor.fetchall()
-    # print(users_data)
     db_instance.close()
 
-    # print(f'looking for: {username}, {password}')
     all_users: List[User] = [pickle.loads(user_data[0]) for user_data in users_data]
 
-    # print(all_users)
     for user in all_users:
-        # print(f'current: {user.username}, {user.password}')
         if not user.username == username:
             continue
         if password is None:
