@@ -5,7 +5,6 @@ from common import SocketEnum, UserEnum, FileEnum, UserEnum, \
     send_pickle_obj, recv_pickle_obj
 from typing import Dict, List, Tuple, Union
 from handle_2FA import is_token_valid
-import handle_string_manipulation
 import time
 import os
 import pickle
@@ -86,7 +85,7 @@ def receive_file_data(client):
 
     if file_extension in FileEnum.FILE_EXTENSION_TO_CENSOR:
         censored_content = \
-            handle_string_manipulation.censor_string_words(file.content)
+            censor_string_words(file.content)
     else:
         censored_content = file.content
 
@@ -126,6 +125,19 @@ def send_tfa_object(client):
     from handle_db import pull_tfa_obj
     tfa_obj = pull_tfa_obj()
     send_pickle_obj(tfa_obj, client)
+
+def get_banned_words() -> List[bytes]:
+    from handle_db import pull_banned_words_obj
+    return pull_banned_words_obj().banned_words
+
+def censor_string_words(input_string):
+    censored_string = input_string
+    banned_words = get_banned_words()
+
+    for word in banned_words:
+        if word in censored_string:
+            censored_string = censored_string.replace(word, b'*' * len(word))
+    return censored_string
 
 
 if __name__ == '__main__':

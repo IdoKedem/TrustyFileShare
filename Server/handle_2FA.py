@@ -1,10 +1,8 @@
 import pyotp, qrcode
 import os
-from handle_string_manipulation import \
-    encrypt, decrypt
 import handle_db
 from typing import Optional
-from common import TFA
+from common import TFA, encrypt, decrypt
 
 def generate_new_key() -> str:
     """
