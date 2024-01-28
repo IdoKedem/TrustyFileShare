@@ -104,7 +104,7 @@ def encrypt(plain: bytes) -> bytes:
 
     encrypted = b''
     for char in mixed_plain:
-        encrypted += chr(char + shift).encode()
+        encrypted += bytes.fromhex(format((char + shift) % 256, 'x').zfill(2))
 
     return encrypted
 
@@ -112,7 +112,7 @@ def decrypt(cipher: bytes) -> bytes:
     shift = 3
     mixed_cipher = b''
     for char in cipher:
-        mixed_cipher += (chr(char - shift)).encode()
+        mixed_cipher += bytes.fromhex(format((char - shift) % 256, 'x').zfill(2))
 
     midpoint = math.ceil(len(mixed_cipher) / 2)
     decrypted_utf8 = mixed_cipher[midpoint:] + \
