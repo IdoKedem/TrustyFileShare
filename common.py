@@ -78,7 +78,6 @@ class User:
         return \
             f'Username: {self.username}\nPassword: {self.password}'
 
-
 class File:
     def __init__(self, file_name,
                  uploading_user: User, file_content: bytes):
