@@ -1,10 +1,10 @@
 import sqlite3
-from datetime import datetime
 import common
-from common import File, TFA, User, BannedWords, encrypt
+from common import File, TFA, User, BannedWords, encrypt, decrypt
 from typing import Tuple, Optional, Dict, List, Any, Union
 import os
 import pickle
+from handle_2FA import create_new_otp
 
 db_name = 'TFS.db'
 
@@ -58,7 +58,7 @@ def pull_user_value(username, password: Optional[str]=None,
     users_data: List[Tuple[bytes]] = db_instance.cursor.fetchall()
     db_instance.close()
 
-    all_users: List[User] = [pickle.loads(user_data[0]) for user_data in users_data]
+    all_users: List[User] = [pickle.loads(decrypt(user_data[0])) for user_data in users_data]
 
     for user in all_users:
         if not user.username == username:
@@ -75,7 +75,7 @@ def insert_user_value(user_obj: User):
     :param user_obj: the user object
     :return:
     """
-    serialized_user = pickle.dumps(user_obj)
+    serialized_user = encrypt(pickle.dumps(user_obj))
     run(command="""INSERT INTO users(user_obj)
                     VALUES (?)""",
         insertion_values=(serialized_user,))
@@ -92,7 +92,7 @@ def initialize_db(db_instance=None):
         ID INTEGER PRIMARY KEY, user_obj BLOB)""", db_instance=db_instance)
 
     for user in common.users:
-        serialized_user = pickle.dumps(user)
+        serialized_user = encrypt(pickle.dumps(user))
         run(command=f"""INSERT OR IGNORE INTO users (user_obj) 
             VALUES(?)""", insertion_values=(sqlite3.Binary(serialized_user),),
             db_instance=db_instance)
@@ -106,13 +106,9 @@ def initialize_db(db_instance=None):
                     tfa_obj BLOB)""",
         db_instance=db_instance)
 
-    if os.path.exists('key.txt') and os.path.exists('img.png'):
-        with open('key.txt', 'r') as f:
-            key = f.read()
-        with open('img.png', 'rb') as f:
-            img = encrypt(f.read()).hex()
-        tfa_object = TFA(key=key, qr_img=img)
-        insert_tfa_data(tfa_object)
+
+    tfa_object = create_new_otp()
+    insert_tfa_data(tfa_object)
 
     run("""CREATE TABLE IF NOT EXISTS BANNED_WORDS(
             banned_words_obj BLOB)""",
@@ -129,7 +125,7 @@ def add_file_to_db(file_obj: File):
     :param file_obj: File type
     :return:
     """
-    serialized_file = pickle.dumps(file_obj)
+    serialized_file = encrypt(pickle.dumps(file_obj))
     run(command=f"""INSERT INTO files(file_obj)
                 VALUES(?)""",
         insertion_values=(serialized_file,))
@@ -156,7 +152,7 @@ def pull_files(db_instance: DataBase=None,
     db_instance.cursor.execute(query, tuple(values))  # commit query
 
     serialized_files: List[Tuple[bytes, None]] = db_instance.cursor.fetchall()
-    files = [pickle.loads(file_data[0]) for file_data in serialized_files]
+    files = [pickle.loads(decrypt(file_data[0])) for file_data in serialized_files]
     return files
 
 def clear_tfa_table():
@@ -172,7 +168,7 @@ def insert_tfa_data(tfa_obj: TFA):
     :param tfa_obj: tfa object
     :return:
     """
-    serialized_obj = pickle.dumps(tfa_obj)
+    serialized_obj = encrypt(pickle.dumps(tfa_obj))
     run(command="""INSERT INTO TFA(tfa_obj)
                     VALUES(?)""",
         insertion_values=(sqlite3.Binary(serialized_obj),))
@@ -187,14 +183,20 @@ def pull_tfa_obj(db_instance: DataBase=None) -> TFA:
         db_instance = DataBase(db_name)
 
     db_instance.cursor.execute('SELECT tfa_obj FROM TFA')
-    tfa_data: Tuple[TFA, None] = db_instance.cursor.fetchone()
-    tfa_obj = pickle.loads(tfa_data[0])
+    tfa_data: Tuple[bytes, None] = db_instance.cursor.fetchone()
+    tfa_obj = pickle.loads(decrypt(tfa_data[0]))
 
     db_instance.close()
     return tfa_obj
 
 def insert_banned_words_obj(banned_words_obj: BannedWords):
-    serialized_obj = pickle.dumps(banned_words_obj)
+    """
+    receives a banned words object and inserts it into the db
+    :param banned_words_obj: banned_words object
+    :return:
+    """
+
+    serialized_obj = encrypt(pickle.dumps(banned_words_obj))
     run(command="""INSERT INTO BANNED_WORDS(banned_words_obj)
                     VALUES(?)""",
         insertion_values=(sqlite3.Binary(serialized_obj),))
@@ -209,8 +211,8 @@ def pull_banned_words_obj(db_instance: DataBase=None) -> BannedWords:
         db_instance = DataBase(db_name)
 
     db_instance.cursor.execute('SELECT banned_words_obj FROM BANNED_WORDS')
-    banned_words_data: Tuple[TFA, None] = db_instance.cursor.fetchone()
-    banned_words = pickle.loads(banned_words_data[0])
+    banned_words_data: Tuple[bytes, None] = db_instance.cursor.fetchone()
+    banned_words = pickle.loads(decrypt(banned_words_data[0]))
 
     db_instance.close()
     return banned_words

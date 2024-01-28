@@ -1,6 +1,5 @@
 import pyotp, qrcode
 import os
-import handle_db
 from typing import Optional
 from common import TFA, encrypt, decrypt
 
@@ -35,9 +34,8 @@ def create_new_otp():
     """
     key = generate_new_key()
     img: bytes = generate_qr_img(get_totp(key))
-    tfa_obj = TFA(key=key, qr_img=img)
+    return TFA(key=key, qr_img=img)
 
-    handle_db.insert_tfa_data(tfa_obj=tfa_obj)
 
 
 def is_token_valid(user_input_token):
@@ -51,6 +49,7 @@ def get_totp(key: Optional[str]=None):
     :return:
     """
     if not key:
+        import handle_db
         key = handle_db.pull_tfa_obj().key
     key = decrypt(bytes.fromhex(key)).decode()
 
@@ -58,5 +57,7 @@ def get_totp(key: Optional[str]=None):
 
 
 if __name__ == '__main__':
+    import handle_db
     handle_db.clear_tfa_table()
-    create_new_otp()
+    tfa_obj = create_new_otp()
+    handle_db.insert_tfa_data(tfa_obj=tfa_obj)

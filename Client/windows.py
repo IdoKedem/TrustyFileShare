@@ -583,6 +583,8 @@ class TFAMenu(BaseMenu):
         image = Image.open(img_path)
         self.qr_photo = ImageTk.PhotoImage(image)
 
+        os.remove(img_path)
+
         self.qr_label = tk.Label(self, image=self.qr_photo)
         self.qr_label.pack()
 
