@@ -100,6 +100,14 @@ class BannedWords:
             self.banned_words = \
                 f.read().replace(b'\r', b'').split(b'\n')
 
+    def censor_string(self, string: bytes):
+        new_string = []
+        words = string.split()
+        for word in words:
+            if word in self.banned_words:
+                word = b'*' * len(word)
+            new_string.append(word)
+        return b' '.join(new_string)
 
 
 def encrypt(plain: bytes) -> bytes:
